@@ -1,0 +1,745 @@
+{{define "title"}}{{.Product.Title}} — Shadow{{end}}
+
+{{define "content"}}
+<style>
+/* ===== PRODUCT DETAIL ===== */
+.pd-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 108px 16px 80px;
+}
+
+.pd-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--text-dim); text-decoration: none;
+  font-size: 0.88rem; font-family: 'Space Grotesk', sans-serif;
+  margin-bottom: 1.5rem; transition: color 0.15s;
+}
+.pd-back:hover { color: var(--text); }
+.pd-back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* ── Gallery ── */
+.pd-gallery { border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem; background: #0a0a0c; }
+.pd-gallery-main {
+  position: relative; width: 100%; padding-top: 58%;
+  overflow: hidden; background: #0a0a0c;
+}
+.pd-gallery-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; display: none;
+}
+.pd-gallery-img.active { display: block; }
+.pd-gallery-placeholder {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dimmer);
+}
+.pd-gallery-placeholder svg { width: 56px; height: 56px; opacity: 0.2; }
+
+.pd-gallery-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%; width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #fff; backdrop-filter: blur(6px);
+  transition: background 0.15s;
+}
+.pd-gallery-nav:hover { background: rgba(0,0,0,0.8); }
+.pd-gallery-nav svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+.pd-gallery-prev { left: 10px; }
+.pd-gallery-next { right: 10px; }
+
+.pd-gallery-thumbs {
+  display: flex; gap: 6px; padding: 8px; overflow-x: auto; background: rgba(0,0,0,0.4);
+  scrollbar-width: none;
+}
+.pd-gallery-thumbs::-webkit-scrollbar { display: none; }
+.pd-thumb {
+  flex-shrink: 0; width: 60px; height: 44px; border-radius: 6px; overflow: hidden;
+  border: 2px solid transparent; cursor: pointer; transition: border-color 0.15s;
+}
+.pd-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.pd-thumb.active { border-color: #a259ff; }
+
+/* ── Info ── */
+.pd-info { display: flex; flex-direction: column; gap: 0; }
+
+.pd-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  font-weight: 700; color: var(--text);
+  line-height: 1.25; margin-bottom: 0.6rem;
+}
+
+.pd-meta {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 0.8rem; flex-wrap: wrap;
+}
+.pd-stars { display: flex; align-items: center; gap: 3px; }
+.pd-star {
+  width: 18px; height: 18px;
+  fill: #d4a017; color: #d4a017;
+}
+.pd-star.empty { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 1.5; }
+html[data-theme="light"] .pd-star.empty { stroke: rgba(0,0,0,0.2); }
+.pd-rating-count {
+  font-size: 0.88rem; color: var(--text-dim);
+  font-family: 'Space Grotesk', sans-serif;
+}
+.pd-views {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.85rem; color: var(--text-dim);
+}
+.pd-views svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+.pd-price {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.8rem; font-weight: 700; color: #a259ff;
+  margin-bottom: 1.2rem;
+}
+
+.pd-desc {
+  font-size: 0.93rem; color: var(--text-dim); line-height: 1.7;
+  margin-bottom: 1.5rem;
+}
+.pd-desc-short { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.pd-desc-full { display: none; }
+.pd-read-more {
+  background: none; border: none; cursor: pointer;
+  color: #a259ff; font-size: 0.85rem; font-family: 'Inter', sans-serif;
+  padding: 0; margin-top: 4px; transition: opacity 0.15s;
+}
+.pd-read-more:hover { opacity: 0.8; }
+
+/* ── Buy Button ── */
+.pd-buy-section { margin-bottom: 2rem; }
+.pd-buy-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%;
+  background: linear-gradient(135deg, #7c3aed, #a259ff);
+  color: #fff; border: none; border-radius: 12px;
+  padding: 1rem 2rem;
+  font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s, transform 0.15s;
+  text-decoration: none;
+}
+.pd-buy-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.pd-buy-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* ── Divider ── */
+.pd-divider { height: 1px; background: var(--line); margin: 1.5rem 0; }
+
+/* ── Rating Section ── */
+.pd-ratings-section { }
+.pd-ratings-title {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700;
+  color: var(--text); margin-bottom: 1.2rem;
+}
+
+/* Rate form */
+.pd-rate-box {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem;
+}
+.pd-rate-box-title {
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 700;
+  color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 1rem;
+}
+.pd-star-picker { display: flex; gap: 6px; margin-bottom: 0.9rem; }
+.pd-star-pick {
+  width: 32px; height: 32px; cursor: pointer;
+  fill: rgba(255,255,255,0.12); color: rgba(255,255,255,0.12);
+  transition: fill 0.1s, transform 0.1s;
+}
+html[data-theme="light"] .pd-star-pick { fill: rgba(0,0,0,0.12); color: rgba(0,0,0,0.12); }
+.pd-star-pick.selected { fill: #d4a017; color: #d4a017; }
+.pd-star-pick:hover { transform: scale(1.15); }
+.pd-rate-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+.pd-rate-comment {
+  width: 100%; box-sizing: border-box;
+  background: var(--surface2); border: 1px solid var(--line); border-radius: 8px;
+  padding: 0.65rem 0.9rem; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 0.88rem; outline: none; resize: none; min-height: 70px;
+  transition: border-color 0.15s; margin-bottom: 0.9rem;
+}
+.pd-rate-comment:focus { border-color: rgba(162,89,255,0.4); }
+.pd-rate-comment::placeholder { color: var(--text-dimmer); }
+.pd-rate-submit {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #a259ff; color: #fff;
+  border: none; border-radius: 9px; padding: 0.6rem 1.4rem;
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.pd-rate-submit:hover { opacity: 0.85; }
+.pd-rate-delete-btn {
+  background: none; border: 1px solid rgba(239,68,68,0.4); border-radius: 9px;
+  color: #ef4444; padding: 0.6rem 1rem; font-size: 0.82rem; cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif; transition: background 0.15s;
+}
+.pd-rate-delete-btn:hover { background: rgba(239,68,68,0.08); }
+.pd-rate-msg { font-size: 0.82rem; color: var(--text-dim); margin-top: 0.6rem; }
+.pd-buyer-only-msg {
+  font-size: 0.85rem; color: var(--text-dim); padding: 0.5rem 0 0.25rem;
+}
+
+.pd-login-prompt {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem;
+  text-align: center; color: var(--text-dim); font-size: 0.9rem;
+}
+.pd-login-prompt a { color: #a259ff; text-decoration: none; }
+.pd-login-prompt a:hover { text-decoration: underline; }
+
+/* ── Reviews list ── */
+.pd-review {
+  border-bottom: 1px solid var(--line);
+  padding: 1rem 0;
+}
+.pd-review:last-child { border-bottom: none; }
+.pd-review-header {
+  display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+.pd-review-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(162,89,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.82rem; font-weight: 700; color: #a259ff;
+  font-family: 'Space Grotesk', sans-serif; flex-shrink: 0;
+}
+.pd-review-name {
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem;
+  font-weight: 600; color: var(--text);
+}
+.pd-verified-badge {
+  font-size: 0.72rem; font-weight: 700; color: #34d399;
+  background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.3);
+  border-radius: 5px; padding: 2px 7px; white-space: nowrap;
+}
+.pd-non-buyer-badge {
+  font-size: 0.72rem; font-weight: 600; color: var(--text-dimmer);
+  background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 5px; padding: 2px 7px; white-space: nowrap;
+}
+.pd-review-stars { display: flex; gap: 2px; }
+.pd-review-star { width: 13px; height: 13px; fill: #d4a017; }
+.pd-review-star.empty { fill: rgba(255,255,255,0.15); }
+html[data-theme="light"] .pd-review-star.empty { fill: rgba(0,0,0,0.15); }
+.pd-review-date { font-size: 0.75rem; color: var(--text-dimmer); margin-left: auto; }
+.pd-review-comment { font-size: 0.88rem; color: var(--text-dim); line-height: 1.6; margin-top: 0.35rem; }
+.pd-review-delete-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-dimmer); font-size: 0.75rem; padding: 2px 4px;
+  border-radius: 4px; transition: color 0.15s;
+}
+.pd-review-delete-btn:hover { color: #ef4444; }
+
+.pd-no-reviews {
+  text-align: center; padding: 2.5rem 1rem; color: var(--text-dimmer);
+  font-size: 0.88rem;
+}
+.pd-no-reviews svg { width: 40px; height: 40px; margin-bottom: 0.75rem; opacity: 0.25; display: block; margin-left: auto; margin-right: auto; stroke: currentColor; fill: none; stroke-width: 1.4; }
+
+/* ── Purchased State ── */
+.pd-purchased-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.25);
+  border-radius: 12px; padding: 0.7rem 1.1rem;
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.92rem; font-weight: 600;
+  color: #34d399; margin-bottom: 0.85rem;
+}
+.pd-view-purchases-link {
+  margin-left: auto; font-size: 0.82rem; color: #a259ff;
+  text-decoration: none; font-weight: 500;
+}
+.pd-view-purchases-link:hover { text-decoration: underline; }
+.pd-download-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; background: linear-gradient(135deg,#1a56db,#3b82f6);
+  color: #fff; border: none; border-radius: 12px;
+  padding: 0.85rem 1.4rem; font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem; font-weight: 700; cursor: pointer;
+  text-decoration: none; transition: opacity 0.15s;
+}
+.pd-download-btn:hover { opacity: 0.88; }
+.pd-download-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+
+/* ── Buy Success Modal ── */
+.buy-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  z-index: 900; align-items: center; justify-content: center; padding: 1rem;
+}
+.buy-overlay.open { display: flex; }
+.buy-box {
+  background: #0d0d0f; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 18px; width: 100%; max-width: 400px;
+  padding: 2rem; text-align: center; position: relative;
+  animation: buyIn 0.25s ease both;
+}
+@keyframes buyIn {
+  from { opacity:0; transform: scale(0.96) translateY(8px); }
+  to   { opacity:1; transform: scale(1) translateY(0); }
+}
+.buy-icon {
+  width: 56px; height: 56px;
+  background: rgba(162,89,255,0.12); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.2rem;
+}
+.buy-icon svg { width: 26px; height: 26px; stroke: #a259ff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.buy-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--text); margin-bottom: 0.6rem; }
+.buy-comment { font-size: 0.88rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 1.4rem; }
+.buy-action-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg,#7c3aed,#a259ff); color: #fff;
+  border: none; border-radius: 10px; padding: 0.7rem 1.6rem;
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 700;
+  cursor: pointer; text-decoration: none; transition: opacity 0.15s; margin-bottom: 1rem;
+}
+.buy-action-btn:hover { opacity: 0.85; }
+.buy-action-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+.buy-rate-prompt {
+  margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  font-size: 0.82rem; color: var(--text-dim);
+}
+.buy-close-link {
+  display: block; margin-top: 0.75rem;
+  font-size: 0.82rem; color: var(--text-dimmer); cursor: pointer;
+  background: none; border: none; font-family: 'Inter', sans-serif; transition: color 0.15s;
+}
+.buy-close-link:hover { color: var(--text-dim); }
+</style>
+
+<div class="pd-wrap">
+
+  <a href="/marketplace" class="pd-back">
+    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    Back to Products
+  </a>
+
+  {{if .Images}}
+  <div class="pd-gallery">
+    <div class="pd-gallery-main" id="galleryMain">
+      {{range $i, $img := .Images}}
+      <img src="/static/{{trimStaticPrefix $img.ImagePath}}" alt="{{$.Product.Title}}"
+           class="pd-gallery-img{{if eq $i 0}} active{{end}}" data-idx="{{$i}}">
+      {{end}}
+
+      {{if gt (len .Images) 1}}
+      <button class="pd-gallery-nav pd-gallery-prev" onclick="galleryNav(-1)" type="button">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="pd-gallery-nav pd-gallery-next" onclick="galleryNav(1)" type="button">
+        <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+      {{end}}
+    </div>
+    {{if gt (len .Images) 1}}
+    <div class="pd-gallery-thumbs" id="galleryThumbs">
+      {{range $i, $img := .Images}}
+      <div class="pd-thumb{{if eq $i 0}} active{{end}}" onclick="galleryGoto({{$i}})" title="Image {{add1 $i}}">
+        <img src="/static/{{trimStaticPrefix $img.ImagePath}}" alt="{{add1 $i}}">
+      </div>
+      {{end}}
+    </div>
+    {{end}}
+  </div>
+  {{else}}
+  <div class="pd-gallery">
+    <div class="pd-gallery-main">
+      <div class="pd-gallery-placeholder">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </div>
+    </div>
+  </div>
+  {{end}}
+
+  <div class="pd-info">
+    <h1 class="pd-title">{{.Product.Title}}</h1>
+
+    <div class="pd-meta">
+      <div class="pd-stars">
+        {{$r := .Product.AvgRating}}
+        {{range seq 5}}
+          {{if lt . (int $r)}}
+          <svg class="pd-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          {{else}}
+          <svg class="pd-star empty" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          {{end}}
+        {{end}}
+        <span class="pd-rating-count">({{.Product.ReviewCount}} reviews)</span>
+      </div>
+      <div class="pd-views">
+        <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        {{.Product.ViewCount}} views
+      </div>
+    </div>
+
+    <div class="pd-price">${{formatPrice .Product.Price}}</div>
+
+    <div class="pd-desc">
+      <div class="pd-desc-short" id="descShort">{{.Product.Description}}</div>
+      <div class="pd-desc-full" id="descFull">{{.Product.Description}}</div>
+      <button class="pd-read-more" id="readMoreBtn" onclick="toggleDesc()" type="button">Read more</button>
+    </div>
+
+    <div class="pd-buy-section" id="buySection">
+      {{if .HasPurchased}}
+      <div class="pd-purchased-bar" id="purchasedBar">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#34d399;fill:none;stroke-width:2.2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Purchased</span>
+        <a href="/purchases" class="pd-view-purchases-link">View in My Purchases →</a>
+      </div>
+      {{if .Product.AfterBuyLink}}
+      <a href="{{.Product.AfterBuyLink}}" class="pd-download-btn" target="_blank" rel="noopener" id="downloadBtn">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        {{if .Product.AfterBuyButtonName}}{{.Product.AfterBuyButtonName}}{{else}}Download{{end}}
+      </a>
+      {{end}}
+      {{else}}
+      {{if .LoggedIn}}
+      <!-- Pending payment button (shown dynamically via JS) -->
+      <a href="/products/{{.Product.ID}}/checkout" class="pd-buy-btn" id="goToPayBtn"
+         style="display:none;background:linear-gradient(135deg,#1a6b3c,#22c55e);text-decoration:none;">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Go to Payment Page
+      </a>
+      <a href="/products/{{.Product.ID}}/checkout" class="pd-buy-btn" id="buyNowBtn" style="text-decoration:none;">
+        <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Buy Now — ${{formatPrice .Product.Price}}
+      </a>
+      {{else}}
+      <a href="/login" class="pd-buy-btn" style="text-decoration:none;">
+        <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Login to Buy — ${{formatPrice .Product.Price}}
+      </a>
+      {{end}}
+      {{end}}
+    </div>
+
+    <div class="pd-divider"></div>
+
+    <div class="pd-ratings-section">
+      <div class="pd-ratings-title">Reviews &amp; Ratings</div>
+
+      {{if .HasPurchased}}
+      <!-- Star rating box: verified buyers only -->
+      <div class="pd-rate-box">
+        <div class="pd-rate-box-title">Your Rating</div>
+        <div class="pd-star-picker" id="starPicker">
+          {{range seq 5}}
+          <svg class="pd-star-pick{{if and (gt $.UserRating 0) (le . (add1 $.UserRating))}} selected{{end}}"
+               viewBox="0 0 24 24" onclick="pickStar({{add1 .}})" data-val="{{add1 .}}">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          {{end}}
+        </div>
+        <div class="pd-rate-actions">
+          <button class="pd-rate-submit" type="button" onclick="submitStarRating()">
+            {{if gt .UserRating 0}}Update Rating{{else}}Submit Rating{{end}}
+          </button>
+          {{if gt .UserRating 0}}
+          <button class="pd-rate-delete-btn" type="button" onclick="deleteStarRating()">Remove</button>
+          {{end}}
+        </div>
+        <div class="pd-rate-msg" id="rateMsg"></div>
+      </div>
+      {{else if .LoggedIn}}
+      <div class="pd-buyer-only-msg">⭐ Only verified buyers can leave a star rating.</div>
+      {{end}}
+
+      {{if .LoggedIn}}
+      <!-- Review/comment box: anyone logged in -->
+      <div class="pd-rate-box">
+        <div class="pd-rate-box-title">Write a Review</div>
+        <textarea class="pd-rate-comment" id="reviewComment" placeholder="Share your experience…" rows="3"></textarea>
+        <button class="pd-rate-submit" type="button" onclick="submitReview()">Post Review</button>
+        <div class="pd-rate-msg" id="reviewMsg"></div>
+      </div>
+      {{else}}
+      <div class="pd-login-prompt">
+        <a href="/login">Sign in</a> to leave a review.
+      </div>
+      {{end}}
+
+      {{if .Reviews}}
+      {{range .Reviews}}
+      <div class="pd-review">
+        <div class="pd-review-header">
+          <div class="pd-review-avatar">{{if .Username}}{{slice .Username 0 1}}{{else}}?{{end}}</div>
+          <span class="pd-review-name">{{if .Username}}{{.Username}}{{else}}Anonymous{{end}}</span>
+          {{if .IsVerifiedBuyer}}
+          <span class="pd-verified-badge">✓ Verified Buyer</span>
+          {{if gt .StarRating 0}}
+          <div class="pd-review-stars">
+            {{$rv := .StarRating}}
+            {{range seq 5}}
+              {{if lt . $rv}}
+              <svg class="pd-review-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              {{else}}
+              <svg class="pd-review-star empty" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              {{end}}
+            {{end}}
+          </div>
+          {{end}}
+          {{else}}
+          <span class="pd-non-buyer-badge">Not a Buyer</span>
+          {{end}}
+          <span class="pd-review-date">{{.CreatedAt.Format "Jan 2, 2006"}}</span>
+          {{if .IsOwn}}
+          <button class="pd-review-delete-btn" onclick="deleteReview({{.ID}})" title="Delete review">✕ Delete</button>
+          {{end}}
+        </div>
+        {{if .Comment}}<div class="pd-review-comment">{{.Comment}}</div>{{end}}
+      </div>
+      {{end}}
+      {{else}}
+      <div class="pd-no-reviews">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 0 2 2z"/></svg>
+        No reviews yet. Be the first to review!
+      </div>
+      {{end}}
+    </div>
+  </div>
+</div>
+
+<!-- Buy Success Modal -->
+<div class="buy-overlay" id="buyOverlay">
+  <div class="buy-box">
+    <div class="buy-icon">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="buy-title">Purchase Successful!</div>
+    <div class="buy-comment" id="buyComment">{{.Product.AfterBuyComment}}</div>
+    {{if .Product.AfterBuyLink}}
+    <a href="{{.Product.AfterBuyLink}}" id="buyActionBtn" class="buy-action-btn" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      {{if .Product.AfterBuyButtonName}}{{.Product.AfterBuyButtonName}}{{else}}Download{{end}}
+    </a>
+    {{end}}
+    {{if .LoggedIn}}
+    <div class="buy-rate-prompt">Did you like it? Scroll down to leave a rating!</div>
+    {{end}}
+    <button class="buy-close-link" onclick="closeBuyModal()" type="button">Close</button>
+  </div>
+</div>
+
+<script>
+var productID = {{.Product.ID}};
+var selectedStar = {{.UserRating}};
+var csrfToken = "{{.CSRFToken}}";
+
+/* ── Gallery ── */
+var galleryIdx = 0;
+var totalImgs = document.querySelectorAll('.pd-gallery-img').length;
+
+function galleryGoto(idx) {
+  document.querySelectorAll('.pd-gallery-img').forEach(function(el, i) {
+    el.classList.toggle('active', i === idx);
+  });
+  document.querySelectorAll('.pd-thumb').forEach(function(el, i) {
+    el.classList.toggle('active', i === idx);
+  });
+  galleryIdx = idx;
+}
+
+function galleryNav(dir) {
+  var next = (galleryIdx + dir + totalImgs) % totalImgs;
+  galleryGoto(next);
+}
+
+/* ── Read More ── */
+function toggleDesc() {
+  var short = document.getElementById('descShort');
+  var full = document.getElementById('descFull');
+  var btn = document.getElementById('readMoreBtn');
+  if (full.style.display === 'block') {
+    full.style.display = 'none';
+    short.style.display = '-webkit-box';
+    btn.textContent = 'Read more';
+  } else {
+    full.style.display = 'block';
+    short.style.display = 'none';
+    btn.textContent = 'Show less';
+  }
+}
+
+(function(){
+  var short = document.getElementById('descShort');
+  var btn = document.getElementById('readMoreBtn');
+  if (short && btn) {
+    var el = document.createElement('div');
+    el.style.cssText = 'position:absolute;visibility:hidden;width:100%;font-size:0.93rem;line-height:1.7;';
+    el.textContent = short.textContent;
+    document.body.appendChild(el);
+    var needsMore = el.scrollHeight > 110;
+    document.body.removeChild(el);
+    if (!needsMore) btn.style.display = 'none';
+  }
+})();
+
+/* ── Check for pending payment on this product ── */
+(function checkPendingPayment() {
+  var buyBtn = document.getElementById('buyNowBtn');
+  var goPayBtn = document.getElementById('goToPayBtn');
+  if (!buyBtn || !goPayBtn) return;
+
+  var key = 'shadowPay_' + productID;
+  var stored = localStorage.getItem(key);
+  if (!stored) return;
+
+  try {
+    var data = JSON.parse(stored);
+    var exp = new Date(data.expiresAt);
+    if (exp < new Date()) {
+      localStorage.removeItem(key);
+      return;
+    }
+    // Has active pending payment - show "Go to Payment" button
+    var payUrl = '/pay/' + data.id;
+    goPayBtn.href = payUrl;
+    goPayBtn.style.display = 'flex';
+    buyBtn.style.display = 'none';
+  } catch(e) {
+    localStorage.removeItem(key);
+  }
+})();
+
+function showPurchasedState(link, btnName, comment) {
+  var section = document.getElementById('buySection');
+  if (!section) return;
+  var dlHtml = '';
+  if (link) {
+    dlHtml = '<a href="' + link + '" class="pd-download-btn" target="_blank" rel="noopener">'
+      + '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'
+      + (btnName || 'Download')
+      + '</a>';
+  }
+  section.innerHTML = '<div class="pd-purchased-bar">'
+    + '<svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#34d399;fill:none;stroke-width:2.2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg>'
+    + '<span>Purchased</span>'
+    + '<a href="/purchases" class="pd-view-purchases-link">View in My Purchases →</a>'
+    + '</div>'
+    + dlHtml;
+
+  /* show success modal too */
+  var cmt = document.getElementById('buyComment');
+  if (cmt) cmt.textContent = comment || '';
+  var overlay = document.getElementById('buyOverlay');
+  if (overlay) {
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+/* ── Buy Modal ── */
+function openBuyModal() {
+  document.getElementById('buyOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeBuyModal() {
+  document.getElementById('buyOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  var rateBox = document.querySelector('.pd-rate-box');
+  if (rateBox) rateBox.scrollIntoView({behavior: 'smooth', block: 'center'});
+}
+document.getElementById('buyOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeBuyModal();
+});
+
+/* ── Star Picker ── */
+function pickStar(val) {
+  selectedStar = val;
+  document.querySelectorAll('.pd-star-pick').forEach(function(el, i) {
+    el.classList.toggle('selected', i < val);
+  });
+}
+
+/* ── Submit Star Rating (buyers only) ── */
+function submitStarRating() {
+  var msg = document.getElementById('rateMsg');
+  if (selectedStar < 1 || selectedStar > 5) {
+    msg.textContent = 'Please select a star rating first.';
+    return;
+  }
+  msg.textContent = 'Saving…';
+  fetch('/api/marketplace/product/' + productID + '/rate', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': csrfToken},
+    body: '_csrf=' + encodeURIComponent(csrfToken) + '&rating=' + selectedStar
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      msg.style.color = '#34d399';
+      msg.textContent = 'Rating saved!';
+      setTimeout(function() { location.reload(); }, 1000);
+    } else {
+      msg.textContent = data.error || 'Failed to save.';
+    }
+  })
+  .catch(function() { msg.textContent = 'Network error.'; });
+}
+
+/* ── Remove Star Rating ── */
+function deleteStarRating() {
+  if (!confirm('Remove your rating?')) return;
+  fetch('/api/marketplace/product/' + productID + '/rate', {
+    method: 'DELETE',
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': csrfToken},
+    body: '_csrf=' + encodeURIComponent(csrfToken)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.ok) { location.reload(); }
+    else { alert(data.error || 'Failed.'); }
+  })
+  .catch(function() { alert('Network error.'); });
+}
+
+/* ── Post Review (anyone logged in) ── */
+function submitReview() {
+  var comment = document.getElementById('reviewComment').value.trim();
+  var msg = document.getElementById('reviewMsg');
+  if (!comment) { msg.textContent = 'Please write something first.'; return; }
+  msg.textContent = 'Posting…';
+  fetch('/api/marketplace/product/' + productID + '/review', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': csrfToken},
+    body: '_csrf=' + encodeURIComponent(csrfToken) + '&comment=' + encodeURIComponent(comment)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      msg.style.color = '#34d399';
+      msg.textContent = 'Review posted!';
+      setTimeout(function() { location.reload(); }, 1000);
+    } else {
+      msg.textContent = data.error || 'Failed to post.';
+    }
+  })
+  .catch(function() { msg.textContent = 'Network error.'; });
+}
+
+/* ── Delete Own Review ── */
+function deleteReview(reviewID) {
+  if (!confirm('Delete this review?')) return;
+  fetch('/api/marketplace/product/' + productID + '/review/' + reviewID, {
+    method: 'DELETE',
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': csrfToken},
+    body: '_csrf=' + encodeURIComponent(csrfToken)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.ok) { location.reload(); }
+    else { alert(data.error || 'Failed to delete.'); }
+  })
+  .catch(function() { alert('Network error.'); });
+}
+</script>
+{{end}}

@@ -1,0 +1,204 @@
+{{define "admin-base"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{block "admin-title" .}}Admin Panel{{end}} — Shadow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #050506;
+  --surface: rgba(255,255,255,0.04);
+  --surface2: rgba(255,255,255,0.07);
+  --text: #F2F2F0;
+  --text-dim: #8A8A8F;
+  --text-dimmer: #4A4A50;
+  --accent: #FFFFFF;
+  --line: rgba(255,255,255,0.09);
+  --red: #FF4545;
+  --green: #34D399;
+  --yellow: #FBBF24;
+  --sidebar-w: 220px;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; min-height: 100vh; display: flex; }
+
+/* Sidebar */
+.sidebar { width: var(--sidebar-w); min-height: 100vh; border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 1.5rem 1rem; position: fixed; top: 0; left: 0; bottom: 0; z-index: 175; background: var(--bg); }
+.sidebar-logo { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2rem; padding: 0 0.5rem; }
+.sidebar-logo span { color: var(--text); }
+.sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.nav-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.75rem; border-radius: 7px; color: var(--text-dim); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: background 0.15s, color 0.15s; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--surface2); color: var(--text); }
+.nav-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.sidebar-footer { padding-top: 1rem; border-top: 1px solid var(--line); }
+.logout-btn { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.75rem; border-radius: 7px; color: var(--red); text-decoration: none; font-size: 0.9rem; font-weight: 500; background: none; border: none; cursor: pointer; font-family: inherit; width: 100%; }
+.logout-btn:hover { background: rgba(255,69,69,0.08); }
+.logout-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Mobile top bar */
+.topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: var(--bg); border-bottom: 1px solid var(--line); z-index: 200; align-items: center; padding: 0 1rem; gap: 1rem; }
+.topbar-logo { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.08em; flex: 1; }
+.topbar-logo span { color: var(--text); }
+.menu-btn { background: none; border: 1px solid var(--line); border-radius: 7px; color: var(--text); padding: 0.4rem; cursor: pointer; display: flex; align-items: center; }
+.menu-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* Drawer overlay */
+.drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 150; }
+.drawer-overlay.open { display: block; }
+
+/* Main content */
+.main { margin-left: var(--sidebar-w); flex: 1; padding: 2rem; min-height: 100vh; }
+.page-header { margin-bottom: 2rem; }
+.page-header h1 { font-size: 1.4rem; font-weight: 600; }
+.page-header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 0.3rem; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.5rem; }
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+.stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.25rem 1.5rem; }
+.stat-label { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.5rem; }
+.stat-value { font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+
+/* Table */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th { text-align: left; padding: 0.6rem 0.75rem; color: var(--text-dim); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--line); }
+td { padding: 0.75rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+.badge { display: inline-flex; align-items: center; padding: 0.2em 0.6em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.badge-green  { background: rgba(52,211,153,0.12); color: var(--green); }
+.badge-red    { background: rgba(255,69,69,0.12);  color: var(--red); }
+.badge-yellow { background: rgba(250,204,21,0.12); color: #FACC15; }
+.badge-dim    { background: var(--surface2);       color: var(--text-dim); }
+a.row-link { color: var(--text); text-decoration: none; }
+a.row-link:hover { color: var(--accent); }
+
+/* Search */
+.search-bar { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; }
+.search-bar input { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.6rem 0.85rem; color: var(--text); font-family: inherit; font-size: 0.9rem; outline: none; }
+.search-bar input:focus { border-color: rgba(255,255,255,0.3); }
+.btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1rem; border-radius: 8px; font-family: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer; text-decoration: none; border: none; transition: opacity 0.15s; }
+.btn:hover { opacity: 0.8; }
+.btn-primary { background: var(--accent); color: #000; }
+.btn-danger { background: rgba(255,69,69,0.15); color: var(--red); border: 1px solid rgba(255,69,69,0.3); }
+.btn-ghost { background: var(--surface2); color: var(--text); }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+
+/* User detail */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.detail-field label { font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 0.3rem; }
+.detail-field .value { font-size: 0.95rem; word-break: break-all; }
+.detail-field .hash { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-dim); word-break: break-all; background: var(--surface2); padding: 0.5rem 0.75rem; border-radius: 6px; }
+.section-title { font-size: 0.85rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 1rem; }
+.action-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+/* Forms */
+.inline-form { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.inline-form input { flex: 1; min-width: 200px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.55rem 0.75rem; color: var(--text); font-family: inherit; font-size: 0.875rem; outline: none; }
+.inline-form input:focus { border-color: rgba(255,255,255,0.3); }
+.form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.4rem; }
+.form-input { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.6rem 0.85rem; color: var(--text); font-family: inherit; font-size: 0.9rem; outline: none; transition: border-color 0.15s; }
+.form-input:focus { border-color: rgba(255,255,255,0.3); }
+.form-input option { background: #0d0d0f; color: var(--text); }
+
+/* Alerts */
+.alert { padding: 0.7rem 1rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 1.25rem; }
+.alert-error { background: rgba(255,69,69,0.1); border: 1px solid rgba(255,69,69,0.3); color: var(--red); }
+.alert-success { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); color: var(--green); }
+
+/* Back link */
+.back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text-dim); text-decoration: none; font-size: 0.875rem; margin-bottom: 1.5rem; }
+.back-link:hover { color: var(--text); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .topbar { display: flex; }
+  .sidebar { transform: translateX(-100%); transition: transform 0.25s; top: 56px; }
+  .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.5); }
+  .main { margin-left: 0; padding: 1rem; padding-top: calc(56px + 1rem); }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile topbar -->
+<div class="topbar">
+  <div class="topbar-logo"><span>Shadow</span> / admin</div>
+  <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+    <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  </button>
+</div>
+
+<!-- Drawer overlay -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo"><span>Shadow</span> / admin</div>
+  <nav class="sidebar-nav">
+    <a href="{{.AdminPath}}" class="nav-item {{if eq .ActivePage "dash"}}active{{end}}">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="{{.AdminPath}}/users" class="nav-item {{if eq .ActivePage "users"}}active{{end}}">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 21v-1a6 6 0 0 1 6-6h0a6 6 0 0 1 6 6v1"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-1a4 4 0 0 0-3-3.85"/></svg>
+      User Management
+    </a>
+    <a href="{{.AdminPath}}/marketplace" class="nav-item {{if eq .ActivePage "marketplace"}}active{{end}}">
+      <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      Marketplace
+    </a>
+    <a href="{{.AdminPath}}/payments" class="nav-item {{if eq .ActivePage "payments"}}active{{end}}">
+      <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+      Payments
+    </a>
+    <a href="{{.AdminPath}}/support" class="nav-item {{if eq .ActivePage "support"}}active{{end}}">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Support
+    </a>
+    <a href="{{.AdminPath}}/settings" class="nav-item {{if eq .ActivePage "settings"}}active{{end}}">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Site Settings
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <form method="POST" action="{{.AdminPath}}/logout">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <button type="submit" class="logout-btn">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Logout
+      </button>
+    </form>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  {{block "admin-content" .}}{{end}}
+</main>
+
+<script>
+const btn = document.getElementById('menuBtn');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('drawerOverlay');
+function toggleMenu() {
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('open');
+}
+btn && btn.addEventListener('click', toggleMenu);
+overlay && overlay.addEventListener('click', toggleMenu);
+</script>
+</body>
+</html>
+{{end}}

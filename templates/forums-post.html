@@ -1,0 +1,689 @@
+{{define "title"}}{{.Post.Title}} — Shadow Forums{{end}}
+
+{{define "content"}}
+<style>
+  :root { --left-panel-bg: #0c0c0e; }
+  html[data-theme="light"] { --left-panel-bg: #e8e7e5; }
+  footer { margin-left: 0; }
+
+  .post-page {
+    max-width: 720px; margin: 0 auto; padding: 108px 24px 80px;
+  }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 0.82rem; color: var(--text-dimmer);
+    text-decoration: none; margin-bottom: 24px; transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--text-dim); }
+  .back-link svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .post-card {
+    border: 1px solid var(--line); border-radius: 16px;
+    background: var(--surface); padding: 24px; margin-bottom: 28px;
+  }
+
+  .post-card-meta {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-dimmer);
+    margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .tag { padding: 2px 8px; border-radius: 100px; border: 1px solid var(--line); color: var(--text-dim); text-decoration: none; transition: border-color 0.2s, color 0.2s; }
+  .tag:hover { color: var(--text); border-color: var(--text-dimmer); }
+  .hashtag { color: var(--text-dimmer); text-decoration: none; }
+  .hashtag:hover { color: var(--text-dim); }
+
+  .post-card h1 {
+    font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 600;
+    letter-spacing: -0.02em; line-height: 1.3; margin-bottom: 14px;
+  }
+
+  .post-card-body {
+    color: var(--text-dim); font-size: 0.92rem; line-height: 1.7;
+    margin-bottom: 18px; white-space: pre-wrap; word-break: break-word;
+  }
+
+  .post-img { width: 100%; border-radius: 10px; margin-bottom: 16px; border: 1px solid var(--line); display: block; }
+
+  .post-card-actions {
+    display: flex; align-items: center; gap: 18px;
+    padding-top: 16px; border-top: 1px solid var(--line);
+    font-size: 0.78rem; color: var(--text-dimmer); flex-wrap: wrap;
+  }
+
+  .vote-row {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .vote-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid var(--line); background: none; color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s, color 0.2s, background 0.2s; cursor: pointer;
+  }
+  .vote-btn:hover { border-color: var(--up); color: var(--up); }
+  .vote-btn.voted-up { border-color: var(--up); color: var(--up); background: rgba(111,224,160,0.08); }
+  .vote-btn.voted-down { border-color: #E05555; color: #E05555; background: rgba(224,85,85,0.08); }
+  .vote-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+  .vote-score { font-family: 'JetBrains Mono', monospace; font-size: 0.86rem; font-weight: 600; color: var(--up); min-width: 24px; text-align: center; }
+  .vote-score.negative { color: #E05555; }
+
+  .action-btn {
+    display: flex; align-items: center; gap: 5px;
+    color: var(--text-dimmer); cursor: pointer; transition: color 0.2s;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+    background: none; border: none;
+  }
+  .action-btn:hover { color: var(--text-dim); }
+  .action-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+
+  .author-follow {
+    margin-left: auto; display: flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-dimmer);
+  }
+  .follow-pill {
+    padding: 4px 12px; border-radius: 100px; border: 1px solid var(--line);
+    background: none; color: var(--text-dim); font-size: 0.76rem; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .follow-pill:hover { border-color: var(--text-dimmer); color: var(--text); }
+  .follow-pill.following { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+
+  /* === COMMENTS === */
+  .comments-section { }
+  .comments-head {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+    color: var(--text-dimmer); letter-spacing: 0.06em; margin-bottom: 16px;
+  }
+
+  .comment-form {
+    border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+    padding: 16px; margin-bottom: 20px;
+  }
+  .comment-form textarea {
+    width: 100%; background: none; border: none; outline: none;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.88rem;
+    resize: none; min-height: 80px; line-height: 1.6;
+  }
+  .comment-form textarea::placeholder { color: var(--text-dimmer); }
+  .comment-form-footer {
+    display: flex; justify-content: flex-end; padding-top: 10px;
+    border-top: 1px solid var(--line); margin-top: 10px;
+  }
+  .comment-submit {
+    padding: 7px 18px; border-radius: 100px; background: var(--accent);
+    color: var(--accent-contrast); border: none; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: opacity 0.2s;
+  }
+  .comment-submit:hover { opacity: 0.82; }
+
+  .comment {
+    display: flex; gap: 12px; margin-bottom: 14px;
+  }
+  .comment-avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #555560, #1e1e24);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.68rem; font-weight: 600; color: #fff;
+    margin-top: 2px; cursor: pointer; transition: opacity 0.2s;
+    text-decoration: none; overflow: hidden;
+  }
+  .comment-avatar:hover { opacity: 0.85; }
+  .comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .comment-content { flex: 1; min-width: 0; }
+  .comment-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 5px; flex-wrap: wrap;
+  }
+  .comment-author {
+    font-size: 0.84rem; font-weight: 500; cursor: pointer;
+    color: var(--text); text-decoration: none; transition: opacity 0.2s;
+  }
+  .comment-author:hover { opacity: 0.75; }
+  .comment-time { font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; color: var(--text-dimmer); }
+  .comment-body { font-size: 0.88rem; color: var(--text-dim); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .comment-actions {
+    display: flex; align-items: center; gap: 10px; margin-top: 7px;
+  }
+  .comment-action {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; color: var(--text-dimmer);
+    cursor: pointer; transition: color 0.2s; background: none; border: none;
+  }
+  .comment-action:hover { color: var(--text-dim); }
+
+  /* comment vote mini */
+  .c-vote { display: flex; align-items: center; gap: 4px; }
+  .c-vote-btn {
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 1px solid var(--line); background: none; color: var(--text-dimmer);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .c-vote-btn:hover { border-color: var(--up); color: var(--up); }
+  .c-vote-btn.voted-up { border-color: var(--up); color: var(--up); background: rgba(111,224,160,0.06); }
+  .c-vote-btn.voted-dn { border-color: #E05555; color: #E05555; background: rgba(224,85,85,0.06); }
+  .c-vote-btn svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+  .c-vote-score { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 600; color: var(--text-dimmer); min-width: 16px; text-align: center; }
+  .c-vote-score.pos { color: var(--up); }
+  .c-vote-score.neg { color: #E05555; }
+
+  /* replies */
+  .replies {
+    margin-left: 28px; margin-top: 10px;
+    border-left: 2px solid var(--line);
+    padding-left: 14px;
+  }
+
+  .reply-form {
+    display: none; margin-top: 10px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 12px;
+  }
+  .reply-form.open { display: block; }
+  .reply-form textarea {
+    width: 100%; background: none; border: none; outline: none;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.85rem;
+    resize: none; min-height: 60px; line-height: 1.6;
+  }
+  .reply-form textarea::placeholder { color: var(--text-dimmer); }
+  .reply-form-footer { display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--line); margin-top: 8px; }
+  .reply-cancel { padding: 5px 14px; border-radius: 100px; border: 1px solid var(--line); background: none; color: var(--text-dim); font-size: 0.78rem; cursor: pointer; }
+  .reply-cancel:hover { border-color: var(--text-dimmer); color: var(--text); }
+  .reply-submit { padding: 5px 14px; border-radius: 100px; background: var(--accent); color: var(--accent-contrast); border: none; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+
+  .no-comments { padding: 32px 0; text-align: center; color: var(--text-dim); font-size: 0.9rem; }
+
+  /* === PROFILE POPUP === */
+  .profile-popup-overlay {
+    display: none; position: fixed; inset: 0; z-index: 300;
+  }
+  .profile-popup {
+    position: absolute; background: var(--bg); border: 1px solid var(--nav-border); border-radius: 16px;
+    width: 280px; box-shadow: 0 16px 48px rgba(0,0,0,0.55);
+    overflow: hidden; animation: popupIn 0.15s ease;
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  }
+  @keyframes popupIn { from { opacity:0; transform: scale(0.95) translateY(-4px); } to { opacity:1; transform: scale(1) translateY(0); } }
+  .popup-banner { height: 60px; background: linear-gradient(135deg, #6F6AF8, #1e1e30); position: relative; overflow: visible; }
+  .popup-avatar {
+    position: absolute; bottom: -24px; left: 16px;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(135deg, #555560, #1e1e24);
+    border: 3px solid var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 700; color: #fff;
+    overflow: hidden; z-index: 2;
+  }
+  .popup-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .popup-body { padding: 32px 16px 16px; }
+  .popup-name { font-family: 'Space Grotesk', sans-serif; font-size: 0.98rem; font-weight: 600; margin-bottom: 2px; }
+  .popup-username { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-dimmer); margin-bottom: 8px; }
+  .popup-bio { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px; }
+  .popup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .popup-btn {
+    padding: 8px 10px; border-radius: 8px; font-size: 0.76rem; font-weight: 600;
+    cursor: pointer; text-align: center; text-decoration: none; display: block;
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+    border: 1px solid var(--line); background: none; color: var(--text-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .popup-btn:hover { border-color: var(--text-dimmer); color: var(--text); }
+  .popup-btn-primary { background: #6fe4a0; color: #050506; border-color: #6fe4a0; }
+  .popup-btn-primary:hover { background: #5bc87a; border-color: #5bc87a; color: #050506; }
+  .popup-btn-following { background: none; color: var(--text-dim); border: 1px solid var(--line); }
+  .popup-btn-following:hover { border-color: #E05555; color: #E05555; }
+  .popup-loading { padding: 30px; text-align: center; color: var(--text-dimmer); font-size: 0.82rem; }
+
+  @media (max-width: 760px) {
+    .post-page { padding: 100px 16px 60px; }
+    .post-card h1 { font-size: 1.2rem; }
+    .replies { margin-left: 18px; }
+  }
+  #postToast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#23272f;color:#fff;padding:10px 22px;border-radius:20px;font-size:.82rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:9999;white-space:nowrap;border:1px solid rgba(111,228,160,.3);}
+  #postToast.visible{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+
+<!-- EDIT POST MODAL -->
+<div id="editPostOverlay" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,calc(100vw - 32px));background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:600;margin-bottom:18px;">Edit Post</div>
+    <input id="editPostTitle" type="text" placeholder="Title"
+      style="width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.9rem;margin-bottom:12px;outline:none;box-sizing:border-box;">
+    <textarea id="editPostBody" placeholder="Body (optional)"
+      style="width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.88rem;resize:vertical;min-height:100px;outline:none;box-sizing:border-box;line-height:1.6;"></textarea>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+      <button onclick="closeEditPost()" style="padding:8px 18px;border-radius:100px;border:1px solid var(--line);background:none;color:var(--text-dim);cursor:pointer;font-size:0.82rem;">Cancel</button>
+      <button onclick="submitEditPost({{.Post.ID}})" style="padding:8px 18px;border-radius:100px;background:var(--accent);color:var(--accent-contrast);border:none;font-size:0.82rem;font-weight:600;cursor:pointer;">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE POPUP OVERLAY -->
+<div class="profile-popup-overlay" id="profilePopupOverlay">
+  <div class="profile-popup" id="profilePopup">
+    <div class="popup-loading" id="popupLoading">Loading…</div>
+  </div>
+</div>
+
+<div class="post-page">
+  <a href="{{if .Post.ServerSlug}}/forums/server/{{.Post.ServerSlug}}{{else}}/forums{{end}}" class="back-link" onclick="if(history.length>1){history.back();return false;}">
+    <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back
+  </a>
+
+  <div class="post-card">
+    <div class="post-card-meta">
+      {{if .Post.CategoryName}}<a href="/forums?cat={{.Post.CategorySlug}}" class="tag">{{.Post.CategoryName}}</a>{{end}}
+      <a href="/user/{{.Post.AuthorName}}" class="comment-author" onclick="showProfilePopup(event,'{{.Post.AuthorName}}')">{{.Post.AuthorName}}</a>
+      <span>·</span>
+      <span>{{call .TimeAgo .Post.CreatedAt}}</span>
+      {{range .Post.Hashtags}}<a href="/forums?tag={{.}}" class="hashtag">#{{.}}</a>{{end}}
+    </div>
+    <h1>{{.Post.Title}}</h1>
+    {{if .Post.ImageURL}}<img src="{{.Post.ImageURL}}" class="post-img" alt="">{{end}}
+    {{if .Post.Body}}<div class="post-card-body">{{.Post.Body}}</div>{{end}}
+    <div class="post-card-actions">
+      <div class="vote-row" id="post-vote-row">
+        <button class="vote-btn {{if eq .Post.UserVote 1}}voted-up{{end}}" aria-label="Upvote"
+          onclick="castPostVote({{.Post.ID}},1,this)" data-dir="up">
+          <svg viewBox="0 0 24 24"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg>
+        </button>
+        <span class="vote-score{{if lt .Post.Score 0}} negative{{end}}" id="post-score">{{.Post.Score}}</span>
+        <button class="vote-btn {{if eq .Post.UserVote -1}}voted-down{{end}}" aria-label="Downvote"
+          onclick="castPostVote({{.Post.ID}},-1,this)" data-dir="down">
+          <svg viewBox="0 0 24 24"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg>
+        </button>
+      </div>
+      <button class="action-btn" onclick="window.scrollTo({top:document.getElementById('comments').offsetTop-20,behavior:'smooth'})">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-1.1 4.2L21 20l-4.3-1.1a8.5 8.5 0 1 1 4.3-7.4z"/></svg>
+        {{.Post.CommentCount}} {{if eq .Post.CommentCount 1}}reply{{else}}replies{{end}}
+      </button>
+      <button class="action-btn" onclick="copyPostLink()">
+        <svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v14"/></svg>
+        Share
+      </button>
+      {{if .Session}}{{if eq .Session.UserID .Post.AuthorID}}
+      <button class="action-btn" onclick="openEditPost()" title="Edit post">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit
+      </button>
+      <button class="action-btn" style="color:#E05555;" onclick="deletePost({{.Post.ID}})" title="Delete post">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        Delete
+      </button>
+      {{end}}{{end}}
+      {{if .Session}}
+      <div class="author-follow">
+        <a href="/user/{{.Post.AuthorName}}" class="comment-author" onclick="showProfilePopup(event,'{{.Post.AuthorName}}')">@{{.Post.AuthorName}}</a>
+        {{if ne .Session.UserID .Post.AuthorID}}
+        <button class="follow-pill" id="followAuthorBtn" type="button" onclick="toggleUserFollow('{{.Post.AuthorName}}',this)">Follow</button>
+        {{end}}
+      </div>
+      {{end}}
+    </div>
+  </div>
+
+  <!-- COMMENTS -->
+  <div id="comments">
+    <div class="comments-head">{{.Post.CommentCount}} {{if eq .Post.CommentCount 1}}REPLY{{else}}REPLIES{{end}}</div>
+
+    {{if .Session}}
+    <div class="comment-form">
+      <form method="POST" action="/forums/post/{{.Post.ID}}/comment">
+        <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+        <textarea name="body" placeholder="Write a reply…" required></textarea>
+        <div class="comment-form-footer">
+          <button type="submit" class="comment-submit">Reply</button>
+        </div>
+      </form>
+    </div>
+    {{else}}
+    <div style="padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:20px;text-align:center;color:var(--text-dim);font-size:0.88rem;">
+      <a href="/login" style="color:var(--text);">Log in</a> to join the discussion
+    </div>
+    {{end}}
+
+    {{if not .Comments}}
+    <div class="no-comments">No replies yet. Start the discussion!</div>
+    {{end}}
+
+    {{range .Comments}}
+    {{template "comment" (list . $.CSRFToken $.Session $.TimeAgo $.Post.ID 0)}}
+    {{end}}
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ─── POST VOTE ─── */
+  window.castPostVote = function(postID, value, btn){
+    {{if not .Session}}window.location.href='/login';return;{{end}}
+    var row = document.getElementById('post-vote-row');
+    if(row.dataset.voting) return;
+    var upBtn = row.querySelector('[data-dir="up"]');
+    var dnBtn = row.querySelector('[data-dir="down"]');
+    var curUp = upBtn.classList.contains('voted-up');
+    var curDn = dnBtn.classList.contains('voted-down');
+    var currentVote = curUp ? 1 : (curDn ? -1 : 0);
+    var send = (currentVote === value) ? 0 : value;
+    row.dataset.voting = '1';
+    fetch('/api/forums/post/'+postID+'/vote',{
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'value='+send+'&_csrf={{.CSRFToken}}'
+    }).then(function(r){return r.json();}).then(function(d){
+      var scoreEl = document.getElementById('post-score');
+      scoreEl.textContent = d.score;
+      scoreEl.className = 'vote-score' + (d.score < 0 ? ' negative' : '');
+      upBtn.className = 'vote-btn' + (d.user_vote === 1 ? ' voted-up' : '');
+      dnBtn.className = 'vote-btn' + (d.user_vote === -1 ? ' voted-down' : '');
+    }).catch(function(){}).finally(function(){ delete row.dataset.voting; });
+  };
+
+  /* ─── COMMENT VOTE ─── */
+  window.castCommentVote = function(commentID, value, btn){
+    {{if not .Session}}window.location.href='/login';return;{{end}}
+    var wrap = document.getElementById('cvote-'+commentID);
+    if(wrap.dataset.voting) return;
+    var upBtn = wrap.querySelector('[data-dir="up"]');
+    var dnBtn = wrap.querySelector('[data-dir="dn"]');
+    var curUp = upBtn.classList.contains('voted-up');
+    var curDn = dnBtn.classList.contains('voted-dn');
+    var currentVote = curUp ? 1 : (curDn ? -1 : 0);
+    var send = (currentVote === value) ? 0 : value;
+    wrap.dataset.voting = '1';
+    fetch('/api/forums/comment/'+commentID+'/vote',{
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'value='+send+'&_csrf={{.CSRFToken}}'
+    }).then(function(r){return r.json();}).then(function(d){
+      var sc = wrap.querySelector('.c-vote-score');
+      sc.textContent = d.score;
+      sc.className = 'c-vote-score' + (d.score > 0 ? ' pos' : d.score < 0 ? ' neg' : '');
+      upBtn.className = 'c-vote-btn' + (d.user_vote === 1 ? ' voted-up' : '');
+      dnBtn.className = 'c-vote-btn' + (d.user_vote === -1 ? ' voted-dn' : '');
+    }).catch(function(){}).finally(function(){ delete wrap.dataset.voting; });
+  };
+
+  /* ─── COPY LINK ─── */
+  window.copyPostLink = function(){
+    navigator.clipboard.writeText(window.location.href).catch(function(){});
+  };
+
+  /* ─── DELETE POST ─── */
+  window.deletePost = function(postID){
+    if(!confirm('Delete this post? This cannot be undone.')) return;
+    fetch('/api/forums/post/'+postID+'/delete',{
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'_csrf={{.CSRFToken}}'
+    }).then(function(r){
+      if(r.ok){ window.location.href='{{if .Post.ServerSlug}}/forums/server/{{.Post.ServerSlug}}{{else}}/forums{{end}}'; }
+      else{ alert('Could not delete post.'); }
+    }).catch(function(){ alert('Could not delete post.'); });
+  };
+
+  /* ─── EDIT POST ─── */
+  window.openEditPost = function(){
+    document.getElementById('editPostTitle').value = document.querySelector('.post-card h1').textContent.trim();
+    document.getElementById('editPostBody').value = document.querySelector('.post-card-body') ? document.querySelector('.post-card-body').textContent.trim() : '';
+    document.getElementById('editPostOverlay').style.display = 'block';
+    document.getElementById('editPostTitle').focus();
+  };
+  window.closeEditPost = function(){
+    document.getElementById('editPostOverlay').style.display = 'none';
+  };
+  window.submitEditPost = function(postID){
+    var title = document.getElementById('editPostTitle').value.trim();
+    var body  = document.getElementById('editPostBody').value.trim();
+    if(!title){ alert('Title is required.'); return; }
+    fetch('/api/forums/post/'+postID+'/edit',{
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'_csrf={{.CSRFToken}}&title='+encodeURIComponent(title)+'&body='+encodeURIComponent(body)
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.ok){
+        document.querySelector('.post-card h1').textContent = d.title;
+        var bodyEl = document.querySelector('.post-card-body');
+        if(bodyEl) bodyEl.textContent = d.body;
+        closeEditPost();
+      } else { alert('Could not save changes.'); }
+    }).catch(function(){ alert('Could not save changes.'); });
+  };
+  document.getElementById('editPostOverlay').addEventListener('click', function(e){
+    if(e.target === this) closeEditPost();
+  });
+
+  /* ─── DELETE COMMENT ─── */
+  window.deleteComment = function(commentID){
+    if(!confirm('Delete this reply? This cannot be undone.')) return;
+    fetch('/api/forums/comment/'+commentID+'/delete',{
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'_csrf={{.CSRFToken}}'
+    }).then(function(r){
+      if(r.ok){
+        var el = document.getElementById('comment-'+commentID);
+        if(el){
+          var bodyEl = el.querySelector('.comment-body');
+          if(bodyEl){ bodyEl.textContent = '[deleted]'; bodyEl.style.color = 'var(--text-dimmer)'; bodyEl.style.fontStyle = 'italic'; }
+          var actions = el.querySelectorAll('.comment-action');
+          actions.forEach(function(a){ if(a.textContent.includes('Edit')||a.textContent.includes('Delete')) a.remove(); });
+          var editForm = document.getElementById('edit-comment-'+commentID);
+          if(editForm) editForm.remove();
+        }
+      } else { alert('Could not delete reply.'); }
+    }).catch(function(){ alert('Could not delete reply.'); });
+  };
+
+  /* ─── EDIT COMMENT ─── */
+  window.openEditComment = function(commentID){
+    document.getElementById('edit-comment-'+commentID).style.display = 'block';
+    var ta = document.getElementById('edit-comment-body-'+commentID);
+    if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  };
+  window.closeEditComment = function(commentID){
+    document.getElementById('edit-comment-'+commentID).style.display = 'none';
+  };
+  window.submitEditComment = function(commentID){
+    var body = document.getElementById('edit-comment-body-'+commentID).value.trim();
+    if(!body){ alert('Reply cannot be empty.'); return; }
+    fetch('/api/forums/comment/'+commentID+'/edit',{
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'_csrf={{.CSRFToken}}&body='+encodeURIComponent(body)
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.ok){
+        var el = document.getElementById('comment-'+commentID);
+        if(el){ var bodyEl = el.querySelector('.comment-body'); if(bodyEl) bodyEl.textContent = d.body; }
+        closeEditComment(commentID);
+      } else { alert('Could not save reply.'); }
+    }).catch(function(){ alert('Could not save reply.'); });
+  };
+
+  /* ─── USER FOLLOW ─── */
+  window.toggleUserFollow = function(username, btn){
+    {{if not .Session}}window.location.href='/login';return;{{end}}
+    fetch('/api/forums/user/'+username+'/follow',{
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'_csrf={{.CSRFToken}}'
+    }).then(function(r){return r.json();}).then(function(d){
+      btn.textContent = d.following ? 'Following' : 'Follow';
+      btn.classList.toggle('following', d.following);
+    }).catch(function(){});
+  };
+
+  /* ─── REPLY FORM ─── */
+  window.openReply = function(commentID){
+    {{if not .Session}}window.location.href='/login';return;{{end}}
+    document.querySelectorAll('.reply-form').forEach(function(f){
+      if(f.dataset.for !== String(commentID)) f.classList.remove('open');
+    });
+    var form = document.getElementById('reply-'+commentID);
+    if(form){ form.classList.toggle('open'); if(form.classList.contains('open')) form.querySelector('textarea').focus(); }
+  };
+
+  /* ─── PROFILE POPUP ─── */
+  var popupOpen = false;
+  var popupUsername = '';
+  var overlay = document.getElementById('profilePopupOverlay');
+  var popup = document.getElementById('profilePopup');
+
+  var IS_LOGGED_IN = {{if .Session}}true{{else}}false{{end}};
+  var SESSION_USER  = '{{if .Session}}{{.Session.Username}}{{end}}';
+  var POST_CSRF     = '{{.CSRFToken}}';
+
+  window.showProfilePopup = function(e, username){
+    e.preventDefault();
+    e.stopPropagation();
+    var rect = e.currentTarget.getBoundingClientRect();
+    overlay.style.display = 'block';
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var pw = Math.min(300, vw - 16);
+    var left = rect.left;
+    if(left + pw > vw - 8) left = vw - pw - 8;
+    if(left < 8) left = 8;
+    var top = rect.bottom + 8;
+    if(top + 260 > vh) top = rect.top - 260 - 8;
+    if(top < 8) top = 8;
+    popup.style.width = pw + 'px';
+    popup.style.left = left + 'px';
+    popup.style.top = top + 'px';
+    popupOpen = true;
+    if(popupUsername === username) return;
+    popupUsername = username;
+    popup.innerHTML = '<div class="popup-loading">Loading…</div>';
+    fetch('/api/forums/user/'+username+'/popup', {credentials:'same-origin'})
+      .then(function(r){return r.json();})
+      .then(function(u){
+        var av = u.avatar_url
+          ? '<img src="'+u.avatar_url+'" alt="">'
+          : '<span>'+escHtml(u.initials||'?')+'</span>';
+        var isSelf = IS_LOGGED_IN && u.username === SESSION_USER;
+        var btns = '';
+        if(IS_LOGGED_IN && !isSelf){
+          var followLbl = u.is_following ? 'Following' : 'Follow';
+          var followCls = u.is_following ? 'popup-btn popup-btn-following' : 'popup-btn popup-btn-primary';
+          btns +=
+            '<button class="'+followCls+'" onclick="toggleFollowPopup(\''+escHtml(u.username)+'\',this)">'+followLbl+'</button>'+
+            '<button class="popup-btn" onclick="postAddFriend(\'' + escHtml(u.username) + '\',this)">Add Friend</button>'+
+            '<a href="/chat?with='+encodeURIComponent(u.username)+'" class="popup-btn">Chat</a>';
+        }
+        btns += '<a href="/forums/u/'+encodeURIComponent(u.username)+'" class="popup-btn">View Profile</a>';
+        popup.innerHTML =
+          '<div class="popup-banner"><div class="popup-avatar">'+av+'</div></div>'+
+          '<div class="popup-body">'+
+            '<div class="popup-name">'+escHtml(u.display_name||u.username)+'</div>'+
+            '<div class="popup-username">@'+escHtml(u.username)+'</div>'+
+            (u.bio ? '<div class="popup-bio">'+escHtml(u.bio)+'</div>' : '')+
+            '<div class="popup-actions">'+btns+'</div>'+
+          '</div>';
+      }).catch(function(){
+        popup.innerHTML = '<div class="popup-loading">Could not load profile</div>';
+      });
+  };
+
+  window.toggleFollowPopup = function(username, btn){
+    if(!IS_LOGGED_IN){ window.location.href='/login'; return; }
+    fetch('/api/forums/user/'+username+'/follow',{
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'_csrf='+encodeURIComponent(POST_CSRF)
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.following){
+        btn.textContent='Following'; btn.className='popup-btn popup-btn-following';
+      } else {
+        btn.textContent='Follow'; btn.className='popup-btn popup-btn-primary';
+      }
+    });
+  };
+
+  function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  document.addEventListener('click', function(e){
+    if(popupOpen && !popup.contains(e.target)){
+      overlay.style.display = 'none';
+      popupOpen = false;
+      popupUsername = '';
+    }
+  });
+})();
+</script>
+{{end}}
+
+{{define "comment"}}
+{{$cm := index . 0}}
+{{$csrf := index . 1}}
+{{$sess := index . 2}}
+{{$timeAgo := index . 3}}
+{{$postID := index . 4}}
+{{$depth := index . 5}}
+<div class="comment" id="comment-{{$cm.ID}}">
+  <a href="/forums/u/{{$cm.AuthorName}}" class="comment-avatar"
+     onclick="showProfilePopup(event,'{{$cm.AuthorName}}')">
+    {{if $cm.AuthorAvatarURL}}<img src="{{$cm.AuthorAvatarURL}}" alt="{{$cm.AuthorName}}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">{{else}}{{if ge (len $cm.AuthorName) 2}}{{slice $cm.AuthorName 0 2 | upper}}{{else}}{{$cm.AuthorName | upper}}{{end}}{{end}}
+  </a>
+  <div class="comment-content">
+    <div class="comment-header">
+      <a href="/user/{{$cm.AuthorName}}" class="comment-author"
+         onclick="showProfilePopup(event,'{{$cm.AuthorName}}')">{{$cm.AuthorName}}</a>
+      <span class="comment-time">{{call $timeAgo $cm.CreatedAt}}</span>
+    </div>
+    <div class="comment-body">{{$cm.Body}}</div>
+    <div class="comment-actions">
+      <!-- mini vote -->
+      <div class="c-vote" id="cvote-{{$cm.ID}}">
+        <button class="c-vote-btn {{if eq $cm.UserVote 1}}voted-up{{end}}" data-dir="up"
+          onclick="castCommentVote({{$cm.ID}},1,this)" aria-label="upvote">
+          <svg viewBox="0 0 24 24"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg>
+        </button>
+        <span class="c-vote-score {{if gt $cm.Score 0}}pos{{else if lt $cm.Score 0}}neg{{end}}">{{$cm.Score}}</span>
+        <button class="c-vote-btn {{if eq $cm.UserVote -1}}voted-dn{{end}}" data-dir="dn"
+          onclick="castCommentVote({{$cm.ID}},-1,this)" aria-label="downvote">
+          <svg viewBox="0 0 24 24"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg>
+        </button>
+      </div>
+      {{if lt $depth 3}}
+      <button class="comment-action" onclick="openReply({{$cm.ID}})">↩ Reply</button>
+      {{end}}
+      {{if $sess}}{{if eq $sess.UserID $cm.AuthorID}}
+      <button class="comment-action" onclick="openEditComment({{$cm.ID}})" title="Edit">✎ Edit</button>
+      <button class="comment-action" style="color:#E05555;" onclick="deleteComment({{$cm.ID}})" title="Delete">✕ Delete</button>
+      {{end}}{{end}}
+    </div>
+    <!-- inline edit form for comment -->
+    <div id="edit-comment-{{$cm.ID}}" style="display:none;margin-top:8px;">
+      <div style="border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px;">
+        <textarea id="edit-comment-body-{{$cm.ID}}" style="width:100%;background:none;border:none;outline:none;color:var(--text);font-family:'Inter',sans-serif;font-size:0.85rem;resize:none;min-height:60px;line-height:1.6;box-sizing:border-box;">{{$cm.Body}}</textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);margin-top:8px;">
+          <button onclick="closeEditComment({{$cm.ID}})" style="padding:5px 14px;border-radius:100px;border:1px solid var(--line);background:none;color:var(--text-dim);font-size:0.78rem;cursor:pointer;">Cancel</button>
+          <button onclick="submitEditComment({{$cm.ID}})" style="padding:5px 14px;border-radius:100px;background:var(--accent);color:var(--accent-contrast);border:none;font-size:0.78rem;font-weight:600;cursor:pointer;">Save</button>
+        </div>
+      </div>
+    </div>
+    {{if $sess}}{{if lt $depth 3}}
+    <div class="reply-form" id="reply-{{$cm.ID}}" data-for="{{$cm.ID}}">
+      <form method="POST" action="/forums/post/{{$postID}}/comment">
+        <input type="hidden" name="_csrf" value="{{$csrf}}">
+        <input type="hidden" name="parent_id" value="{{$cm.ID}}">
+        <textarea name="body" placeholder="Write a reply…" required></textarea>
+        <div class="reply-form-footer">
+          <button type="button" class="reply-cancel" onclick="openReply({{$cm.ID}})">Cancel</button>
+          <button type="submit" class="reply-submit">Reply</button>
+        </div>
+      </form>
+    </div>
+    {{end}}{{end}}
+    {{if $cm.Replies}}
+    <div class="replies">
+      {{$newDepth := add1 $depth}}
+      {{range $cm.Replies}}
+      {{template "comment" (list . $csrf $sess $timeAgo $postID $newDepth)}}
+      {{end}}
+    </div>
+    {{end}}
+  </div>
+</div>
+{{end}}

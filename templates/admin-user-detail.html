@@ -1,0 +1,87 @@
+{{define "admin-title"}}User: @{{.User.Username}}{{end}}
+
+{{define "admin-content"}}
+<a href="{{.AdminPath}}/users" class="back-link">
+  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 5l-7 7 7 7"/></svg>
+  Back to users
+</a>
+
+<div class="page-header">
+  <h1>@{{.User.Username}}</h1>
+  <p>
+    {{if .User.Banned}}<span class="badge badge-red" style="margin-right:0.5rem;">Banned</span>{{end}}
+    {{if .User.IsOnline}}<span class="badge badge-green">Online</span>{{else if .User.IsIdle}}<span class="badge badge-yellow">Idle</span>{{else}}<span class="badge badge-dim">Offline</span>{{end}}
+  </p>
+</div>
+
+{{if .Error}}<div class="alert alert-error">{{.Error}}</div>{{end}}
+{{if eq .Success "password"}}<div class="alert alert-success">Password updated successfully.</div>{{end}}
+
+<!-- User Data -->
+<div class="card" style="margin-bottom:1.25rem;">
+  <div class="section-title">User Data</div>
+  <div class="detail-grid">
+    <div class="detail-field">
+      <label>User ID</label>
+      <div class="value" style="font-family:'JetBrains Mono',monospace;">{{.User.ID}}</div>
+    </div>
+    <div class="detail-field">
+      <label>Username</label>
+      <div class="value">{{.User.Username}}</div>
+    </div>
+    <div class="detail-field">
+      <label>Display Name</label>
+      <div class="value">{{if .User.DisplayName}}{{.User.DisplayName}}{{else}}<span style="color:var(--text-dimmer)">Not set</span>{{end}}</div>
+    </div>
+    <div class="detail-field">
+      <label>Email</label>
+      <div class="value">{{if .User.Email}}{{.User.Email}}{{else}}<span style="color:var(--text-dimmer)">Not set</span>{{end}}</div>
+    </div>
+    <div class="detail-field">
+      <label>Bio</label>
+      <div class="value">{{if .User.Bio}}{{.User.Bio}}{{else}}<span style="color:var(--text-dimmer)">Not set</span>{{end}}</div>
+    </div>
+    <div class="detail-field">
+      <label>Joined</label>
+      <div class="value">{{.User.CreatedAt.Format "Jan 2, 2006 at 15:04"}}</div>
+    </div>
+    <div class="detail-field" style="grid-column:1/-1;">
+      <label>Password Hash</label>
+      <div class="hash">{{.PasswordHash}}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div class="card" style="margin-bottom:1.25rem;">
+  <div class="section-title">Actions</div>
+  <div class="action-row">
+    {{if .User.Banned}}
+    <form method="POST" action="{{.AdminPath}}/users/{{.User.ID}}/unban">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <button type="submit" class="btn btn-ghost">Unban User</button>
+    </form>
+    {{else}}
+    <form method="POST" action="{{.AdminPath}}/users/{{.User.ID}}/ban">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <button type="submit" class="btn btn-danger">Ban User</button>
+    </form>
+    {{end}}
+
+    <form method="POST" action="{{.AdminPath}}/users/{{.User.ID}}/delete" onsubmit="return confirm('Delete @{{.User.Username}}? This cannot be undone.')">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <button type="submit" class="btn btn-danger">Delete User</button>
+    </form>
+  </div>
+</div>
+
+<!-- Change Password -->
+<div class="card">
+  <div class="section-title">Change Password</div>
+  <form method="POST" action="{{.AdminPath}}/users/{{.User.ID}}/password" class="inline-form">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+    <input type="password" name="new_password" placeholder="New password (min 8 chars)" autocomplete="new-password">
+    <button type="submit" class="btn btn-primary">Update Password</button>
+  </form>
+</div>
+{{end}}

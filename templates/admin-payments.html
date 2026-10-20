@@ -1,0 +1,469 @@
+{{define "admin-title"}}Payments{{end}}
+
+{{define "admin-content"}}
+<style>
+.pay-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 1.5rem;
+}
+.pay-search-wrap {
+  flex: 1; position: relative; max-width: 380px;
+}
+.pay-search-wrap svg {
+  position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+  width: 15px; height: 15px; stroke: var(--text-dim); fill: none;
+  stroke-width: 2; stroke-linecap: round; pointer-events: none;
+}
+.pay-search {
+  width: 100%; background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 9px; padding: 0.55rem 0.75rem 0.55rem 34px;
+  font-size: 0.88rem; color: var(--text); font-family: 'Space Grotesk', sans-serif;
+  outline: none;
+}
+.pay-search:focus { border-color: rgba(162,89,255,0.4); }
+.pay-gear-btn {
+  background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 9px; padding: 0.52rem 0.65rem;
+  cursor: pointer; color: var(--text-dim);
+  display: flex; align-items: center; transition: all 0.15s;
+}
+.pay-gear-btn:hover { background: var(--surface); color: var(--text); border-color: rgba(162,89,255,0.3); }
+.pay-gear-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+.pay-refresh-info {
+  margin-left: auto; font-size: 0.75rem; color: var(--text-dimmer);
+  display: flex; align-items: center; gap: 6px;
+}
+.pay-live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: #22c55e;
+  animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.pay-tabs {
+  display: flex; gap: 4px; margin-bottom: 1.25rem; flex-wrap: wrap;
+}
+.pay-tab {
+  padding: 0.38rem 1rem; border-radius: 20px; border: 1px solid var(--line);
+  background: var(--surface2); font-size: 0.8rem; font-weight: 600;
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+  font-family: 'Space Grotesk', sans-serif;
+}
+.pay-tab:hover { background: var(--surface); color: var(--text); }
+.pay-tab.active {
+  background: rgba(162,89,255,0.15); border-color: rgba(162,89,255,0.4); color: #a259ff;
+}
+.pay-tab .tab-count {
+  display: inline-block; background: rgba(162,89,255,0.2); border-radius: 20px;
+  padding: 0 6px; font-size: 0.7rem; margin-left: 4px; color: #c084fc;
+}
+.pay-tab.active-tab .tab-count { background: rgba(162,89,255,0.3); }
+
+.pay-table-wrap {
+  overflow-x: auto; border: 1px solid var(--line); border-radius: 12px;
+}
+.pay-table {
+  width: 100%; border-collapse: collapse; font-size: 0.84rem;
+}
+.pay-table th {
+  padding: 0.7rem 1rem; text-align: left; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim);
+  border-bottom: 1px solid var(--line); background: var(--surface);
+  white-space: nowrap;
+}
+.pay-table td {
+  padding: 0.75rem 1rem; border-bottom: 1px solid var(--line);
+  vertical-align: middle; color: var(--text);
+}
+.pay-table tr:last-child td { border-bottom: none; }
+.pay-table tr:hover td { background: rgba(255,255,255,0.02); }
+.pay-table .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 700;
+  font-family: 'Space Grotesk', sans-serif; white-space: nowrap;
+}
+.status-pending  { background: rgba(234,179,8,0.15);  color: #eab308; border: 1px solid rgba(234,179,8,0.25); }
+.status-confirmed{ background: rgba(34,197,94,0.15);  color: #22c55e; border: 1px solid rgba(34,197,94,0.25); }
+.status-expired  { background: rgba(107,114,128,0.15);color: #6b7280; border: 1px solid rgba(107,114,128,0.25); }
+.status-cancelled{ background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+.coin-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.78rem; font-weight: 700;
+}
+.coin-btc { color: #f7931a; }
+.coin-xmr { color: #ff6600; }
+.timer-cell { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--text-dim); }
+.timer-cell.urgent { color: #ef4444; }
+.details-btn {
+  background: rgba(162,89,255,0.1); border: 1px solid rgba(162,89,255,0.25);
+  color: #a259ff; border-radius: 7px; padding: 4px 10px;
+  font-size: 0.75rem; font-weight: 700; cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif; transition: all 0.15s; white-space: nowrap;
+}
+.details-btn:hover { background: rgba(162,89,255,0.2); }
+.pay-empty {
+  padding: 4rem 1rem; text-align: center; color: var(--text-dim);
+}
+.pay-empty svg { width: 44px; height: 44px; opacity: 0.25; stroke: currentColor; fill: none; margin-bottom: 1rem; }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  z-index: 9000; display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 16px; padding: 1.75rem; width: 100%; max-width: 560px;
+  max-height: 90vh; overflow-y: auto; position: relative;
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.modal-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 4px 8px; cursor: pointer;
+  font-size: 0.8rem; color: var(--text-dim); transition: all 0.15s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+.detail-item { background: var(--surface2); border: 1px solid var(--line); border-radius: 10px; padding: 0.75rem; }
+.detail-item.full { grid-column: 1 / -1; }
+.detail-label { font-size: 0.68rem; font-weight: 700; letter-spacing:.06em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.3rem; }
+.detail-val {
+  font-size: 0.85rem; color: var(--text); word-break: break-all;
+  font-family: 'JetBrains Mono', monospace;
+}
+.detail-val.big { font-size: 1rem; font-weight: 700; }
+.copy-btn {
+  background: none; border: none; cursor: pointer; color: var(--text-dimmer);
+  font-size: 0.7rem; padding: 2px 5px; border-radius: 4px;
+  transition: color 0.15s; vertical-align: middle;
+}
+.copy-btn:hover { color: var(--text); }
+.balance-loading { color: var(--text-dimmer); font-size: 0.8rem; font-style: italic; }
+
+/* ── Settings Modal ── */
+.settings-row { display: flex; flex-direction: column; gap: 1rem; }
+.settings-field label { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing:.06em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.4rem; }
+.settings-field input[type=number] {
+  width: 120px; background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 0.5rem 0.75rem; color: var(--text);
+  font-size: 0.9rem; font-family: 'Space Grotesk', sans-serif;
+}
+.settings-field .hint { font-size: 0.75rem; color: var(--text-dimmer); margin-top: 0.3rem; }
+.btn-primary { background: linear-gradient(135deg,#7c3aed,#a259ff); color:#fff; border:none; border-radius:9px; padding:0.55rem 1.25rem; font-family:'Space Grotesk',sans-serif; font-size:0.88rem; font-weight:700; cursor:pointer; transition:opacity 0.15s; }
+.btn-primary:hover { opacity:0.85; }
+</style>
+
+<div class="page-header">
+  <h1>Payments</h1>
+  <p>Real-time log of all crypto payment activity.</p>
+</div>
+
+<!-- Toolbar -->
+<div class="pay-toolbar">
+  <div class="pay-search-wrap">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="paySearch" class="pay-search" placeholder="Search by ID, user, product…">
+  </div>
+  <button class="pay-gear-btn" onclick="openSettings()" title="Payment Timer Settings">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+  <div class="pay-refresh-info">
+    <div class="pay-live-dot"></div>
+    <span id="lastRefresh">Live</span>
+  </div>
+</div>
+
+<!-- Status Tabs -->
+<div class="pay-tabs">
+  <button class="pay-tab active" data-status="all" onclick="setTab(this)">All <span class="tab-count" id="cnt-all">0</span></button>
+  <button class="pay-tab" data-status="pending" onclick="setTab(this)">Pending <span class="tab-count" id="cnt-pending">0</span></button>
+  <button class="pay-tab" data-status="confirmed" onclick="setTab(this)">Confirmed <span class="tab-count" id="cnt-confirmed">0</span></button>
+  <button class="pay-tab" data-status="expired" onclick="setTab(this)">Expired <span class="tab-count" id="cnt-expired">0</span></button>
+  <button class="pay-tab" data-status="cancelled" onclick="setTab(this)">Cancelled <span class="tab-count" id="cnt-cancelled">0</span></button>
+</div>
+
+<!-- Table -->
+<div class="pay-table-wrap">
+  <table class="pay-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Product</th>
+        <th>Coin</th>
+        <th>Amount</th>
+        <th>Received</th>
+        <th>Status</th>
+        <th>Time Left</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="payTableBody">
+      <tr><td colspan="9" class="pay-empty">
+        <svg viewBox="0 0 24 24" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+        <div>Loading…</div>
+      </td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Details Modal -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeDetail()">✕ Close</button>
+    <div class="modal-title" id="detailTitle">Payment Details</div>
+    <div class="detail-grid" id="detailGrid">
+      <div class="detail-item full"><div class="detail-label">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-box" style="max-width:400px;">
+    <button class="modal-close" onclick="closeSettings()">✕ Close</button>
+    <div class="modal-title">⚙ Timer Settings</div>
+    <div class="settings-row">
+      <div class="settings-field">
+        <label>Payment Window (minutes)</label>
+        <input type="number" id="setWindow" value="{{.WindowMinutes}}" min="5" max="1440">
+        <div class="hint">How long buyer has to send crypto after choosing coin. Default: 30 min.</div>
+      </div>
+      <div class="settings-field">
+        <label>Cleanup After Confirmation (hours)</label>
+        <input type="number" id="setCleanup" value="{{.CleanupHours}}" min="1" max="720">
+        <div class="hint">How long to keep wallet records after payment confirmed/expired before deleting. Default: 5 hrs.</div>
+      </div>
+      <div>
+        <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+        <span id="settingsSaved" style="font-size:0.8rem;color:#22c55e;margin-left:0.75rem;display:none;">✓ Saved</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var adminPath = '{{.AdminPath}}';
+var currentStatus = 'all';
+var currentSearch = '';
+var allPayments = [];
+var timerIntervals = {};
+var pollInterval = null;
+
+function setTab(btn) {
+  document.querySelectorAll('.pay-tab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+  currentStatus = btn.dataset.status;
+  renderTable();
+}
+
+document.getElementById('paySearch').addEventListener('input', function() {
+  currentSearch = this.value.trim().toLowerCase();
+  renderTable();
+});
+
+function fmtTimer(secsLeft) {
+  if (secsLeft <= 0) return '—';
+  var m = Math.floor(secsLeft / 60), s = secsLeft % 60;
+  return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function statusBadge(s) {
+  return '<span class="status-badge status-' + s + '">' + s.charAt(0).toUpperCase() + s.slice(1) + '</span>';
+}
+
+function coinBadge(c) {
+  if (c === 'btc') return '<span class="coin-badge coin-btc">₿ BTC</span>';
+  return '<span class="coin-badge coin-xmr">ɱ XMR</span>';
+}
+
+function renderTable() {
+  var tbody = document.getElementById('payTableBody');
+  var filtered = allPayments.filter(function(p) {
+    if (currentStatus !== 'all' && p.status !== currentStatus) return false;
+    if (currentSearch) {
+      var hay = (p.id + p.username + p.product_title).toLowerCase();
+      if (hay.indexOf(currentSearch) === -1) return false;
+    }
+    return true;
+  });
+
+  // Update counts
+  var counts = {all: allPayments.length, pending:0, confirmed:0, expired:0, cancelled:0};
+  allPayments.forEach(function(p){ if (counts[p.status] !== undefined) counts[p.status]++; });
+  Object.keys(counts).forEach(function(k){
+    var el = document.getElementById('cnt-' + k);
+    if (el) el.textContent = counts[k];
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="pay-empty"><svg viewBox="0 0 24 24" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg><div>No payments found</div></td></tr>';
+    return;
+  }
+
+  // Clear old timer intervals
+  Object.values(timerIntervals).forEach(clearInterval);
+  timerIntervals = {};
+
+  tbody.innerHTML = filtered.map(function(p) {
+    var shortId = p.id.length > 12 ? p.id.slice(0,12) + '…' : p.id;
+    var prodShort = (p.product_title || '—').length > 22 ? p.product_title.slice(0,22) + '…' : (p.product_title || '—');
+    return '<tr data-id="' + p.id + '">' +
+      '<td class="mono" title="' + p.id + '">' + shortId + '</td>' +
+      '<td>' + escHtml(p.username) + '</td>' +
+      '<td title="' + escHtml(p.product_title) + '">' + escHtml(prodShort) + '</td>' +
+      '<td>' + coinBadge(p.coin) + '</td>' +
+      '<td><div style="font-weight:700;">$' + p.amount_usd.toFixed(2) + '</div>' +
+        '<div style="font-size:0.72rem;color:var(--text-dim);">' + p.amount_crypto.toFixed(8) + ' ' + p.coin.toUpperCase() + '</div></td>' +
+      '<td class="mono">' + (p.received > 0 ? p.received.toFixed(8) : '—') + '</td>' +
+      '<td>' + statusBadge(p.status) + '</td>' +
+      '<td class="timer-cell" id="timer-' + p.id + '">' + (p.status === 'pending' ? fmtTimer(p.secs_left) : '—') + '</td>' +
+      '<td><button class="details-btn" onclick="openDetail(\'' + p.id + '\')">Details</button></td>' +
+    '</tr>';
+  }).join('');
+
+  // Start live countdown timers for pending
+  filtered.forEach(function(p) {
+    if (p.status !== 'pending' || p.secs_left <= 0) return;
+    var remaining = p.secs_left;
+    var el = document.getElementById('timer-' + p.id);
+    if (!el) return;
+    timerIntervals[p.id] = setInterval(function() {
+      remaining--;
+      if (!el || remaining <= 0) {
+        clearInterval(timerIntervals[p.id]);
+        delete timerIntervals[p.id];
+        if (el) el.textContent = '—';
+        return;
+      }
+      el.textContent = fmtTimer(remaining);
+      el.className = 'timer-cell' + (remaining < 120 ? ' urgent' : '');
+    }, 1000);
+  });
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function loadPayments() {
+  var url = adminPath + '/api/payments?status=' + encodeURIComponent(currentStatus) +
+    '&search=' + encodeURIComponent(document.getElementById('paySearch').value.trim());
+  fetch(url, {credentials:'same-origin'})
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      allPayments = data || [];
+      renderTable();
+      var now = new Date();
+      document.getElementById('lastRefresh').textContent =
+        'Updated ' + now.toLocaleTimeString();
+    })
+    .catch(function(e){ console.error('payments poll:', e); });
+}
+
+// Poll every 5 seconds
+loadPayments();
+pollInterval = setInterval(loadPayments, 5000);
+
+// ── Details Modal ──────────────────────────────────────────────────────────────
+function openDetail(payId) {
+  document.getElementById('detailModal').classList.add('open');
+  document.getElementById('detailTitle').textContent = 'Payment — ' + payId;
+  document.getElementById('detailGrid').innerHTML =
+    '<div class="detail-item full"><div class="balance-loading">Loading details…</div></div>';
+
+  fetch(adminPath + '/api/payments/' + payId + '/detail', {credentials:'same-origin'})
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      var secsLeft = d.secs_left || 0;
+      var timeLeft = d.status === 'pending' ? fmtTimer(secsLeft) + ' (' + secsLeft + ' sec)' : '—';
+      var gridHtml =
+        row2('Payment ID', d.id, true) +
+        row2('Status', statusBadge(d.status), false, true) +
+        row2('Coin', coinBadge(d.coin), false, true) +
+        row2('Amount USD', '$' + (d.amount_usd||0).toFixed(2), false) +
+        row2('Amount Crypto', (d.amount_crypto||0).toFixed(8) + ' ' + (d.coin||'').toUpperCase(), false) +
+        row2('Received', (d.received||0).toFixed(8) + ' ' + (d.coin||'').toUpperCase(), false) +
+        '<div class="detail-item full">' +
+          '<div class="detail-label">Live Wallet Balance <span style="font-size:0.65rem;color:var(--text-dimmer);">(from blockchain)</span></div>' +
+          '<div class="detail-val big" style="color:' + (d.balance_btc > 0 ? '#22c55e' : 'var(--text)') + '">' +
+            (d.balance_btc !== undefined ? (d.balance_btc).toFixed(8) + ' BTC (' + d.balance_sat + ' sat)' : 'N/A') +
+          '</div>' +
+        '</div>' +
+        row2('Time Remaining', timeLeft, false) +
+        row2('Created At', d.created_at, false) +
+        row2('Expires At', d.expires_at, false) +
+        '<div class="detail-item full">' +
+          '<div class="detail-label">Wallet Address <button class="copy-btn" onclick="copyText(\'' + escAttr(d.wallet) + '\',this)">Copy</button></div>' +
+          '<div class="detail-val">' + escHtml(d.wallet) + '</div>' +
+        '</div>' +
+        '';
+      document.getElementById('detailGrid').innerHTML = gridHtml;
+    })
+    .catch(function(e) {
+      document.getElementById('detailGrid').innerHTML =
+        '<div class="detail-item full"><div class="detail-label" style="color:#ef4444;">Failed to load. ' + e + '</div></div>';
+    });
+}
+
+function row2(label, val, mono, raw) {
+  return '<div class="detail-item">' +
+    '<div class="detail-label">' + label + '</div>' +
+    '<div class="detail-val' + (mono ? '' : '') + '">' + (raw ? val : escHtml(String(val))) + '</div>' +
+    '</div>';
+}
+
+function escAttr(s) {
+  return String(s||'').replace(/'/g,"\\'").replace(/\\/g,'\\\\');
+}
+
+function copyText(txt, btn) {
+  navigator.clipboard.writeText(txt).then(function() {
+    var orig = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(function(){ btn.textContent = orig; }, 1500);
+  });
+}
+
+function closeDetail() {
+  document.getElementById('detailModal').classList.remove('open');
+}
+
+// ── Settings Modal ──────────────────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+function saveSettings() {
+  var w = document.getElementById('setWindow').value;
+  var c = document.getElementById('setCleanup').value;
+  var body = 'window_minutes=' + encodeURIComponent(w) + '&cleanup_hours=' + encodeURIComponent(c);
+  fetch(adminPath + '/api/payments/settings', {
+    method: 'POST', credentials: 'same-origin',
+    headers: {'Content-Type':'application/x-www-form-urlencoded'},
+    body: body
+  }).then(function(r){ return r.json(); }).then(function(d) {
+    if (d.ok) {
+      var el = document.getElementById('settingsSaved');
+      el.style.display = 'inline';
+      setTimeout(function(){ el.style.display = 'none'; }, 2000);
+    }
+  });
+}
+
+// Close modals on overlay click
+document.getElementById('detailModal').addEventListener('click', function(e){
+  if (e.target === this) closeDetail();
+});
+document.getElementById('settingsModal').addEventListener('click', function(e){
+  if (e.target === this) closeSettings();
+});
+</script>
+{{end}}

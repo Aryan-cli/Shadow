@@ -1,0 +1,455 @@
+{{define "title"}}Payment — {{if .Product}}{{.Product.Title}}{{else}}Order{{end}}{{end}}
+
+{{define "content"}}
+<style>
+.pp-wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 108px 16px 80px;
+}
+.pp-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--text-dim); text-decoration: none;
+  font-size: 0.88rem; font-family: 'Space Grotesk', sans-serif;
+  margin-bottom: 1.5rem; transition: color 0.15s;
+}
+.pp-back:hover { color: var(--text); }
+.pp-back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+
+/* Timer */
+.pp-timer-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 0.75rem 1.2rem; margin-bottom: 1.5rem;
+}
+.pp-timer-label { font-size: 0.8rem; color: var(--text-dim); font-family: 'Space Grotesk', sans-serif; }
+.pp-timer-val {
+  font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 600;
+  color: var(--text); letter-spacing: 0.06em;
+}
+.pp-timer-val.urgent { color: #ef4444; }
+.pp-progress-wrap {
+  width: 100%; height: 4px; background: var(--surface2);
+  border-radius: 2px; margin-top: 8px; overflow: hidden;
+}
+.pp-progress-bar {
+  height: 100%; background: linear-gradient(90deg, #a259ff, #7c3aed);
+  border-radius: 2px; transition: width 1s linear;
+}
+
+/* Status card */
+.pp-status-card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem;
+}
+.pp-status-header {
+  padding: 1rem 1.4rem;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 10px;
+}
+.pp-status-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #eab308; animation: pulse-dot 1.5s infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.pp-status-dot.confirmed { background: #34d399; animation: none; }
+.pp-status-dot.expired { background: #ef4444; animation: none; }
+.pp-status-text {
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem;
+  font-weight: 600; color: var(--text);
+}
+
+/* Address + amount */
+.pp-field { padding: 1rem 1.4rem; border-bottom: 1px solid var(--line); }
+.pp-field:last-child { border-bottom: none; }
+.pp-field-label {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--text-dimmer); margin-bottom: 0.5rem;
+}
+.pp-address-wrap { display: flex; align-items: center; gap: 8px; }
+.pp-address {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
+  color: var(--text); word-break: break-all; flex: 1;
+  line-height: 1.5;
+}
+.pp-copy-btn {
+  flex-shrink: 0; background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 10px; cursor: pointer;
+  color: var(--text-dim); font-size: 0.75rem; font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600; transition: all 0.15s; white-space: nowrap;
+}
+.pp-copy-btn:hover { background: rgba(162,89,255,0.1); border-color: rgba(162,89,255,0.4); color: #a259ff; }
+.pp-copy-btn.copied { color: #34d399; border-color: rgba(52,211,153,0.4); }
+
+.pp-amount-big {
+  font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 700;
+  color: #a259ff; letter-spacing: 0.03em;
+}
+.pp-amount-usd { font-size: 0.82rem; color: var(--text-dim); margin-top: 2px; }
+.pp-received-bar {
+  margin-top: 0.6rem; padding: 0.4rem 0.7rem;
+  background: rgba(52,211,153,0.07); border: 1px solid rgba(52,211,153,0.2);
+  border-radius: 8px; font-size: 0.8rem; color: #34d399;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* QR */
+.pp-qr-wrap {
+  display: flex; justify-content: center; padding: 1.2rem;
+}
+#pp-qr-canvas {
+  border-radius: 12px; background: #fff; padding: 10px;
+}
+
+/* Done state */
+.pp-done-card {
+  display: none;
+  background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.3);
+  border-radius: 16px; padding: 2rem; text-align: center; margin-bottom: 1.5rem;
+}
+.pp-done-card.show { display: block; }
+.pp-done-icon {
+  width: 56px; height: 56px; background: rgba(52,211,153,0.15); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;
+}
+.pp-done-icon svg { width: 26px; height: 26px; stroke: #34d399; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+.pp-done-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 700; color: #34d399; margin-bottom: 0.5rem; }
+.pp-done-text { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1.2rem; }
+.pp-go-product {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg,#7c3aed,#a259ff); color: #fff;
+  border: none; border-radius: 10px; padding: 0.65rem 1.5rem;
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 700;
+  cursor: pointer; text-decoration: none; transition: opacity 0.15s;
+}
+.pp-go-product:hover { opacity: 0.85; }
+
+/* Expired state */
+.pp-expired-card {
+  display: none;
+  background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 16px; padding: 1.5rem; text-align: center; margin-bottom: 1.5rem;
+}
+.pp-expired-card.show { display: block; }
+.pp-expired-title { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; color: #ef4444; margin-bottom: 0.4rem; }
+.pp-expired-text { font-size: 0.85rem; color: var(--text-dim); }
+
+/* Cancel btn */
+.pp-cancel-btn {
+  display: block; width: 100%; text-align: center;
+  background: none; border: 1px solid var(--line); border-radius: 10px;
+  padding: 0.65rem; color: var(--text-dim); font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.88rem; cursor: pointer; transition: all 0.15s; margin-top: 0.75rem;
+}
+.pp-cancel-btn:hover { border-color: rgba(239,68,68,0.4); color: #ef4444; }
+
+/* Coin badge */
+.pp-coin-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700;
+  font-family: 'Space Grotesk', sans-serif;
+}
+.pp-coin-badge.btc { background: rgba(247,147,26,0.12); color: #f7931a; }
+.pp-coin-badge.xmr { background: rgba(255,102,0,0.1); color: #ff6600; }
+</style>
+
+<!-- Load QR code library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+
+<div class="pp-wrap" id="ppWrap">
+
+  <a href="#" class="pp-back" id="ppBackBtn" onclick="cancelAndGoBack(event)">
+    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    Back to product
+  </a>
+
+  <!-- Done state -->
+  <div class="pp-done-card" id="ppDoneCard">
+    <div class="pp-done-icon">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="pp-done-title">Payment Confirmed!</div>
+    <div class="pp-done-text">Your payment has been received and verified. You can now access your purchase.</div>
+    {{if .Product}}
+    <a href="/products/{{.Product.ID}}" class="pp-go-product">View Product →</a>
+    {{end}}
+  </div>
+
+  <!-- Expired state -->
+  <div class="pp-expired-card" id="ppExpiredCard">
+    <div class="pp-expired-title">Payment Window Expired</div>
+    <div class="pp-expired-text">This payment session has expired. Any funds sent will be returned to the main wallet. Please start a new order.</div>
+  </div>
+
+  <!-- Timer -->
+  <div id="ppTimerSection">
+    <div class="pp-timer-bar">
+      <div>
+        <div class="pp-timer-label">Time remaining</div>
+        <div class="pp-progress-wrap">
+          <div class="pp-progress-bar" id="ppProgressBar" style="width:100%"></div>
+        </div>
+      </div>
+      <div class="pp-timer-val" id="ppTimerVal">30:00</div>
+    </div>
+  </div>
+
+  <!-- Status card -->
+  <div class="pp-status-card" id="ppStatusCard">
+    <div class="pp-status-header">
+      <div class="pp-status-dot" id="ppStatusDot"></div>
+      <div class="pp-status-text" id="ppStatusText">Waiting for payment…</div>
+      {{if eq .Payment.Coin "btc"}}
+      <span class="pp-coin-badge btc" style="margin-left:auto;">₿ Bitcoin</span>
+      {{else}}
+      <span class="pp-coin-badge xmr" style="margin-left:auto;">ɱ Monero</span>
+      {{end}}
+    </div>
+
+    <!-- Amount -->
+    <div class="pp-field">
+      <div class="pp-field-label">Exact amount to send</div>
+      <div class="pp-amount-big">{{formatCrypto .Payment.AmountCrypto}} {{upper .Payment.Coin}}</div>
+      <div class="pp-amount-usd">≈ ${{formatPrice .Payment.AmountUSD}} USD</div>
+      <div class="pp-received-bar" id="ppReceivedBar" style="display:none">
+        Received: <span id="ppReceivedAmt">0</span> {{upper .Payment.Coin}}
+      </div>
+    </div>
+
+    <!-- Address -->
+    <div class="pp-field">
+      <div class="pp-field-label">Send to this address</div>
+      <div class="pp-address-wrap">
+        <div class="pp-address" id="ppAddress">{{.Payment.WalletAddress}}</div>
+        <button class="pp-copy-btn" type="button" onclick="copyAddress()" id="ppCopyBtn">Copy</button>
+      </div>
+    </div>
+
+    <!-- QR Code -->
+    <div class="pp-qr-wrap" id="ppQrWrap">
+      <div id="pp-qr-canvas"></div>
+    </div>
+
+    <!-- Warning -->
+    <div class="pp-field" style="background:rgba(234,179,8,0.04);">
+      <div style="display:flex;gap:8px;align-items:flex-start;">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#eab308;fill:none;stroke-width:2;flex-shrink:0;margin-top:2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span style="font-size:0.8rem;color:var(--text-dim);line-height:1.55;">
+          Send <strong style="color:var(--text);">exactly {{formatCrypto .Payment.AmountCrypto}} {{upper .Payment.Coin}}</strong> or more. Partial payments are tracked — your total received must reach this amount.
+          Do <strong style="color:var(--text);">not</strong> close this page — payment confirms automatically.
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <button class="pp-cancel-btn" type="button" onclick="cancelPayment()" id="ppCancelBtn">
+    Cancel payment
+  </button>
+
+</div>
+
+<script>
+var PAYMENT_ID = "{{.Payment.ID}}";
+var PRODUCT_ID = "{{.Payment.ProductID}}";
+var COIN = "{{.Payment.Coin}}";
+var AMOUNT_CRYPTO = {{.Payment.AmountCrypto}};
+var EXPIRES_ISO = "{{.ExpiresISO}}";
+var TOTAL_SECS = {{.SecondsLeft}};
+var csrfToken = "{{.CSRFToken}}";
+var STATUS = "{{.Payment.Status}}";
+
+// Store active payment in localStorage
+localStorage.setItem('shadowPay_' + PRODUCT_ID, JSON.stringify({
+  id: PAYMENT_ID,
+  coin: COIN,
+  productId: PRODUCT_ID,
+  productTitle: {{.Product.Title | js}},
+  expiresAt: EXPIRES_ISO
+}));
+
+// Generate QR after library loads
+window.addEventListener('load', function() {
+  if (typeof QRCode !== 'undefined') {
+    try {
+      new QRCode(document.getElementById('pp-qr-canvas'), {
+        text: COIN === 'btc' ? 'bitcoin:' + document.getElementById('ppAddress').textContent + '?amount=' + AMOUNT_CRYPTO : document.getElementById('ppAddress').textContent,
+        width: 180,
+        height: 180,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch(e) {}
+  }
+});
+
+// Address copy
+function copyAddress() {
+  var addr = document.getElementById('ppAddress').textContent.trim();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(addr).then(function() {
+      var btn = document.getElementById('ppCopyBtn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+}
+
+// Timer
+var expiresAt = new Date(EXPIRES_ISO);
+var timerInterval = null;
+
+function updateTimer() {
+  var now = new Date();
+  var left = Math.max(0, Math.floor((expiresAt - now) / 1000));
+  var mins = Math.floor(left / 60);
+  var secs = left % 60;
+  var display = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+  var el = document.getElementById('ppTimerVal');
+  if (el) {
+    el.textContent = display;
+    if (left < 120) el.classList.add('urgent');
+    else el.classList.remove('urgent');
+  }
+  var prog = document.getElementById('ppProgressBar');
+  if (prog) {
+    var pct = Math.max(0, Math.min(100, (left / (30 * 60)) * 100));
+    prog.style.width = pct + '%';
+  }
+  if (left === 0) {
+    clearInterval(timerInterval);
+    showExpired();
+  }
+}
+
+if (TOTAL_SECS > 0 && STATUS === 'pending') {
+  timerInterval = setInterval(updateTimer, 1000);
+  updateTimer();
+}
+
+// Status polling
+var pollInterval = null;
+
+function pollStatus() {
+  fetch('/api/pay/' + PAYMENT_ID + '/status', {credentials: 'same-origin'})
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.status === 'confirmed') {
+        clearInterval(pollInterval);
+        clearInterval(timerInterval);
+        localStorage.removeItem('shadowPay_' + PRODUCT_ID);
+        showConfirmed(data.after_buy_link, data.after_buy_button, data.after_buy_comment);
+        return;
+      }
+      if (data.status === 'expired' || data.status === 'cancelled') {
+        clearInterval(pollInterval);
+        clearInterval(timerInterval);
+        localStorage.removeItem('shadowPay_' + PRODUCT_ID);
+        showExpired();
+        return;
+      }
+      // Update received amount display
+      if (data.received_amount && data.received_amount > 0) {
+        var rb = document.getElementById('ppReceivedBar');
+        var ra = document.getElementById('ppReceivedAmt');
+        if (rb && ra) {
+          ra.textContent = data.received_amount.toFixed(8) + ' ' + COIN.toUpperCase();
+          rb.style.display = 'block';
+        }
+        var sdot = document.getElementById('ppStatusDot');
+        var stxt = document.getElementById('ppStatusText');
+        if (sdot) sdot.style.background = '#eab308';
+        if (stxt) stxt.textContent = 'Partial payment received, waiting for more…';
+      }
+    })
+    .catch(function() {});
+}
+
+if (STATUS === 'pending') {
+  pollInterval = setInterval(pollStatus, 10000);
+  pollStatus();
+} else if (STATUS === 'confirmed') {
+  // Fetch status to get after_buy data, then show confirmed state
+  fetch('/api/pay/' + PAYMENT_ID + '/status', {credentials: 'same-origin'})
+    .then(function(r) { return r.json(); })
+    .then(function(data) { showConfirmed(data.after_buy_link, data.after_buy_button, data.after_buy_comment); })
+    .catch(function() { showConfirmed(); });
+} else if (STATUS === 'expired' || STATUS === 'cancelled') {
+  showExpired();
+}
+
+function showConfirmed(afterBuyLink, afterBuyButton, afterBuyComment) {
+  document.getElementById('ppDoneCard').classList.add('show');
+  document.getElementById('ppStatusCard').style.display = 'none';
+  document.getElementById('ppTimerSection').style.display = 'none';
+  document.getElementById('ppCancelBtn').style.display = 'none';
+  var dot = document.getElementById('ppStatusDot');
+  if (dot) { dot.classList.add('confirmed'); }
+
+  // Show after_buy content if available
+  var doneCard = document.getElementById('ppDoneCard');
+  if (afterBuyLink && doneCard) {
+    var btn = document.createElement('a');
+    btn.href = afterBuyLink;
+    btn.target = '_blank';
+    btn.rel = 'noopener noreferrer';
+    btn.className = 'pp-go-product';
+    btn.style.marginTop = '10px';
+    btn.textContent = afterBuyButton || 'Download';
+    doneCard.appendChild(btn);
+  }
+  if (afterBuyComment && doneCard) {
+    var note = document.createElement('div');
+    note.style.cssText = 'margin-top:10px;font-size:0.88rem;color:var(--text-dim);';
+    note.textContent = afterBuyComment;
+    doneCard.appendChild(note);
+  }
+}
+
+function showExpired() {
+  document.getElementById('ppExpiredCard').classList.add('show');
+  document.getElementById('ppStatusCard').style.display = 'none';
+  document.getElementById('ppTimerSection').style.display = 'none';
+  document.getElementById('ppCancelBtn').style.display = 'none';
+}
+
+function cancelPayment() {
+  if (!confirm('Cancel this payment? Any funds already sent will still be processed.')) return;
+  fetch('/api/pay/' + PAYMENT_ID + '/cancel', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {'X-CSRF-Token': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded'},
+    body: '_csrf=' + encodeURIComponent(csrfToken)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.ok) {
+      clearInterval(pollInterval);
+      clearInterval(timerInterval);
+      localStorage.removeItem('shadowPay_' + PRODUCT_ID);
+      showExpired();
+    }
+  }).catch(function() {});
+}
+
+function cancelAndGoBack(e) {
+  e.preventDefault();
+  var productUrl = '/products/{{if .Product}}{{.Product.ID}}{{else}}{{end}}';
+  if (!productUrl || productUrl === '/products/') { productUrl = '/marketplace'; }
+
+  // If payment already done/expired/cancelled, clear and navigate
+  if (STATUS === 'confirmed' || STATUS === 'expired' || STATUS === 'cancelled') {
+    localStorage.removeItem('shadowPay_' + PRODUCT_ID);
+    window.location.href = productUrl;
+    return;
+  }
+
+  // Payment still pending — just go back, keep payment alive so floating timer stays visible
+  window.location.href = productUrl;
+}
+</script>
+{{end}}

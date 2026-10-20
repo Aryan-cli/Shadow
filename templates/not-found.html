@@ -1,0 +1,17 @@
+{{template "base" .}}
+
+{{define "title"}}User Not Found — Shadow{{end}}
+
+{{define "content"}}
+<section class="hero" style="min-height:60vh;display:flex;align-items:center;justify-content:center;">
+  <div style="text-align:center;max-width:480px;padding:2rem;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:5rem;font-weight:700;opacity:0.08;line-height:1;margin-bottom:1rem;">404</div>
+    <h1 style="font-size:1.75rem;margin-bottom:0.75rem;">User not found</h1>
+    <p style="color:var(--text-muted);margin-bottom:2rem;">
+      <code style="background:var(--surface);padding:0.2em 0.5em;border-radius:6px;font-family:'JetBrains Mono',monospace;">@{{.Username}}</code>
+      — this username doesn't exist or was never registered.
+    </p>
+    <button onclick="history.back()" class="btn btn-primary">← Go back</button>
+  </div>
+</section>
+{{end}}

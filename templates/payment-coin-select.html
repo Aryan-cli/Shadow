@@ -1,0 +1,176 @@
+{{define "title"}}Choose Payment — {{.Product.Title}}{{end}}
+
+{{define "content"}}
+<style>
+.cs-wrap {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 108px 16px 80px;
+}
+.cs-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--text-dim); text-decoration: none;
+  font-size: 0.88rem; font-family: 'Space Grotesk', sans-serif;
+  margin-bottom: 2rem; transition: color 0.15s;
+}
+.cs-back:hover { color: var(--text); }
+.cs-back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+
+.cs-header { text-align: center; margin-bottom: 2rem; }
+.cs-icon {
+  width: 60px; height: 60px; background: rgba(162,89,255,0.12);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1rem;
+}
+.cs-icon svg { width: 28px; height: 28px; stroke: #a259ff; fill: none; stroke-width: 2; stroke-linecap: round; }
+.cs-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+.cs-subtitle { font-size: 0.9rem; color: var(--text-dim); }
+
+.cs-product-bar {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 0.9rem 1.1rem; margin-bottom: 1.75rem;
+}
+.cs-product-thumb {
+  width: 48px; height: 48px; border-radius: 8px; object-fit: cover;
+  background: var(--surface2); flex-shrink: 0;
+}
+.cs-product-thumb-placeholder {
+  width: 48px; height: 48px; border-radius: 8px;
+  background: var(--surface2); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.cs-product-thumb-placeholder svg { width: 20px; height: 20px; stroke: var(--text-dimmer); fill: none; stroke-width: 1.5; }
+.cs-product-name { font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text); }
+.cs-product-price { font-size: 0.85rem; color: #a259ff; font-weight: 700; margin-top: 2px; }
+
+.cs-coins { display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.5rem; }
+
+.cs-coin-btn {
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--surface); border: 2px solid var(--line);
+  border-radius: 16px; padding: 1.1rem 1.4rem;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  text-align: left; width: 100%; font-family: 'Space Grotesk', sans-serif;
+  position: relative;
+}
+.cs-coin-btn:hover:not(:disabled) {
+  border-color: rgba(162,89,255,0.5);
+  background: rgba(162,89,255,0.04);
+}
+.cs-coin-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.cs-coin-logo {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+}
+.cs-coin-logo.btc { background: rgba(247,147,26,0.15); }
+.cs-coin-logo.xmr { background: rgba(255,102,0,0.12); }
+
+.cs-coin-info { flex: 1; }
+.cs-coin-name { font-size: 1rem; font-weight: 700; color: var(--text); }
+.cs-coin-desc { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+
+.cs-coin-arrow {
+  width: 20px; height: 20px; stroke: var(--text-dimmer); fill: none;
+  stroke-width: 2; stroke-linecap: round; flex-shrink: 0;
+}
+
+.cs-maint-badge {
+  position: absolute; top: 10px; right: 12px;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: .04em;
+  background: rgba(234,179,8,0.15); color: #eab308;
+  border: 1px solid rgba(234,179,8,0.3); border-radius: 6px;
+  padding: 2px 7px; text-transform: uppercase;
+}
+
+.cs-note {
+  text-align: center; font-size: 0.8rem; color: var(--text-dimmer);
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.cs-note svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+</style>
+
+<div class="cs-wrap">
+  <a href="/products/{{.Product.ID}}" class="cs-back">
+    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    Back to product
+  </a>
+
+  <div class="cs-header">
+    <div class="cs-icon">
+      <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    </div>
+    <div class="cs-title">Choose Payment Method</div>
+    <div class="cs-subtitle">Select a cryptocurrency to pay with</div>
+  </div>
+
+  <div class="cs-product-bar">
+    {{if .Product.ThumbnailPath}}
+    <img src="/static/{{trimStaticPrefix .Product.ThumbnailPath}}" class="cs-product-thumb" alt="">
+    {{else}}
+    <div class="cs-product-thumb-placeholder">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+    </div>
+    {{end}}
+    <div>
+      <div class="cs-product-name">{{.Product.Title}}</div>
+      <div class="cs-product-price">${{formatPrice .Product.Price}}</div>
+    </div>
+  </div>
+
+  <form method="POST" action="/products/{{.Product.ID}}/checkout">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+
+    <div class="cs-coins">
+      {{if .BTCEnabled}}
+      <button type="submit" name="coin" value="btc" class="cs-coin-btn">
+        <div class="cs-coin-logo btc">₿</div>
+        <div class="cs-coin-info">
+          <div class="cs-coin-name">Bitcoin (BTC)</div>
+          <div class="cs-coin-desc">Confirmed in ~10 min · Most widely supported</div>
+        </div>
+        <svg class="cs-coin-arrow" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+      {{end}}
+
+      <button type="submit" name="coin" value="xmr" class="cs-coin-btn"
+        {{if not .XMREnabled}}disabled{{end}}>
+        <div class="cs-coin-logo xmr">ɱ</div>
+        <div class="cs-coin-info">
+          <div class="cs-coin-name">Monero (XMR)</div>
+          <div class="cs-coin-desc">Private · Untraceable · Anonymous</div>
+        </div>
+        {{if .XMRMaint}}
+        <span class="cs-maint-badge">Maintenance</span>
+        {{else}}
+        <svg class="cs-coin-arrow" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        {{end}}
+      </button>
+    </div>
+  </form>
+
+  <div class="cs-note">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    Payment window is valid for 30 minutes after selection
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('err') === 'active_payment') {
+    var toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e1e30;border:1px solid rgba(234,179,8,0.4);color:#eab308;padding:12px 20px;border-radius:10px;font-size:0.88rem;font-family:Space Grotesk,sans-serif;font-weight:500;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,0.4);max-width:360px;text-align:center;';
+    toast.textContent = 'Ek payment session pehle se active hai. Pehle us payment ko cancel karen, phir naya payment shuru karen.';
+    document.body.appendChild(toast);
+    setTimeout(function() {
+      toast.style.transition = 'opacity 0.4s';
+      toast.style.opacity = '0';
+      setTimeout(function() { toast.remove(); }, 400);
+    }, 5000);
+    history.replaceState(null, '', window.location.pathname);
+  }
+})();
+</script>
+{{end}}

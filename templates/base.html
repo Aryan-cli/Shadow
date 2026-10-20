@@ -1,0 +1,504 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{block "title" .}}Shadow — Private by default{{end}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>!function(){var s=localStorage.getItem('shadow-theme');if(!s){var m=document.cookie.match(/(?:^|;\s*)shadow-theme=([^;]*)/);if(m)s=decodeURIComponent(m[1]);}if(s==='light')document.documentElement.setAttribute('data-theme','light');}();</script>
+<link rel="stylesheet" href="/static/style.css?v=6">
+<style>
+#globalNotifToast{position:fixed;top:18px;right:18px;z-index:99990;display:flex;align-items:flex-start;gap:11px;background:#1a1a20;border:1px solid rgba(162,89,255,.35);border-radius:14px;padding:12px 15px;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.55);transform:translateY(-12px);opacity:0;pointer-events:none;transition:transform .25s ease,opacity .25s ease;}
+#globalNotifToast.show{transform:translateY(0);opacity:1;pointer-events:auto;}
+#globalNotifToast.hide{transform:translateY(-12px);opacity:0;}
+.gnt-icon{width:34px;height:34px;background:rgba(162,89,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.gnt-icon svg{width:16px;height:16px;stroke:#a259ff;fill:none;stroke-width:2;}
+.gnt-body{min-width:0;}
+.gnt-from{font-size:.78rem;font-weight:600;color:#a259ff;margin-bottom:2px;font-family:'Space Grotesk',sans-serif;}
+.gnt-msg{font-size:.8rem;color:#c8c8cc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px;font-family:'Inter',sans-serif;}
+html[data-theme="light"] #globalNotifToast{background:#fff;border-color:rgba(162,89,255,.3);box-shadow:0 8px 32px rgba(0,0,0,.18);}
+html[data-theme="light"] .gnt-msg{color:#555;}
+@media(max-width:480px){#globalNotifToast{right:10px;left:10px;max-width:none;}}
+</style>
+<script src="/static/htmx.min.js" defer></script>
+</head>
+<body>
+
+<noscript>
+  <div style="position:fixed;inset:0;z-index:99999;background:#0d0d0f;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif,Arial,sans-serif;">
+    <div style="text-align:center;padding:2rem;max-width:420px;">
+      <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="#a259ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:1.4rem;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+      <h1 style="color:#F2F2F0;font-size:1.5rem;font-weight:700;margin:0 0 0.75rem;">JavaScript Required</h1>
+      <p style="color:#8A8A8F;font-size:0.97rem;line-height:1.7;margin:0;">This website needs JavaScript.<br>Turn it on, then try reloading the page.</p>
+    </div>
+  </div>
+</noscript>
+
+<div class="nav-wrap">
+  <div class="nav-inner">
+    <nav>
+      <div class="logo">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" type="button">
+          <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+        </button>
+        <a href="/" style="text-decoration:none;color:inherit;">Shadow</a>
+      </div>
+      <div class="nav-links">
+        <a href="/forums">Forums</a>
+        <a href="/marketplace">Market</a>
+        <a href="/chat">Chat</a>
+        <a href="/support">Support</a>
+      </div>
+      {{if .Session}}
+      <div class="user-menu" id="userMenu">
+        <button class="user-pill" id="userPillBtn" aria-haspopup="true" aria-expanded="false" type="button">
+          <div class="user-avatar" id="navAvatar">{{if .AvatarURL}}<img src="{{.AvatarURL}}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">{{else}}{{.Initials}}{{end}}</div>
+          <div class="user-name">{{.Session.Username}}<span class="status">online</span></div>
+        </button>
+        <div class="user-dropdown" id="userDropdown">
+          <a href="/profile" class="dropdown-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>
+            Profile
+          </a>
+          <a href="/settings" class="dropdown-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.8"/><path d="M19.4 13.5c.1-.5.1-1 0-1.5l1.6-1.2-1.5-2.6-1.9.6a6.6 6.6 0 0 0-1.3-.8L16 6h-3l-.3 2a6.6 6.6 0 0 0-1.3.8l-1.9-.6-1.5 2.6L9.6 12c-.1.5-.1 1 0 1.5l-1.6 1.2 1.5 2.6 1.9-.6c.4.3.8.6 1.3.8l.3 2h3l.3-2c.5-.2.9-.5 1.3-.8l1.9.6 1.5-2.6L19.4 13.5z"/></svg>
+            Settings
+          </a>
+          <div class="dropdown-divider"></div>
+          <form method="POST" action="/logout" style="display:contents">
+            <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+            <button type="submit" class="dropdown-item dropdown-danger">
+              <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+              Logout
+            </button>
+          </form>
+        </div>
+      </div>
+      {{else}}
+      <div class="nav-auth">
+        <a href="/login" class="nav-link-auth">Login</a>
+        <a href="/register" class="btn btn-primary btn-sm">Register</a>
+      </div>
+      {{end}}
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" type="button">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="/forums">Forums</a>
+      <a href="/marketplace">Market</a>
+      <a href="/chat">Chat</a>
+      <a href="/support">Support</a>
+      <div class="mobile-divider"></div>
+      {{if .Session}}
+      <a href="/settings" class="mobile-link">Settings</a>
+      <form method="POST" action="/logout">
+        <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+        <button type="submit" class="mobile-link mobile-danger">Logout</button>
+      </form>
+      {{else}}
+      <a href="/login" class="mobile-link">Login</a>
+      <a href="/register" class="mobile-link">Register</a>
+      {{end}}
+    </div>
+  </div>
+</div>
+
+<!-- GLOBAL NOTIFICATION TOAST -->
+<div id="globalNotifToast">
+  <div class="gnt-icon">
+    <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+  </div>
+  <div class="gnt-body">
+    <div class="gnt-from" id="gntFrom"></div>
+    <div class="gnt-msg" id="gntMsg"></div>
+  </div>
+</div>
+
+{{block "content" .}}{{end}}
+
+<footer>
+  <span>© 2026 Shadow</span>
+  <span>Privacy</span>
+  <span>Contact</span>
+</footer>
+
+<!-- ── Floating Payment Cart (multi-payment) ── -->
+<style>
+#floatingPayCart {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 8000; display: none; flex-direction: column;
+  background: #13131a; border: 1px solid rgba(162,89,255,0.4);
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  font-family: 'Space Grotesk', sans-serif;
+  min-width: 340px; max-width: 500px;
+  animation: cartIn 0.3s ease both;
+}
+@keyframes cartIn {
+  from { opacity:0; transform: translateX(-50%) translateY(16px); }
+  to   { opacity:1; transform: translateX(-50%) translateY(0); }
+}
+#floatingPayCart.show { display: flex; }
+.fpc-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  font-size: 0.72rem; font-weight: 700; letter-spacing:.05em;
+  text-transform: uppercase; color: #a259ff;
+}
+.fpc-header svg { width:13px; height:13px; stroke:#a259ff; fill:none; stroke-width:2; stroke-linecap:round; }
+.fpc-header-count {
+  margin-left: auto; background: rgba(162,89,255,0.2);
+  border-radius: 20px; padding: 1px 8px;
+  font-size: 0.68rem; color: #c084fc;
+}
+.fpc-list { display: flex; flex-direction: column; max-height: 220px; overflow-y: auto; }
+.fpc-list::-webkit-scrollbar { width: 4px; }
+.fpc-list::-webkit-scrollbar-track { background: transparent; }
+.fpc-list::-webkit-scrollbar-thumb { background: rgba(162,89,255,0.3); border-radius: 4px; }
+.fpc-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.15s;
+}
+.fpc-row:last-child { border-bottom: none; }
+.fpc-row:hover { background: rgba(255,255,255,0.03); }
+.fpc-coin-badge {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 700;
+}
+.fpc-coin-badge.btc { background: rgba(247,147,26,0.15); }
+.fpc-coin-badge.xmr { background: rgba(255,102,0,0.12); }
+.fpc-info { flex: 1; min-width: 0; }
+.fpc-prod-name {
+  font-size: 0.8rem; font-weight: 700; color: #f2f2f0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 160px;
+}
+.fpc-timer {
+  font-size: 0.7rem; color: #8a8a8f; margin-top: 1px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.fpc-timer.urgent { color: #ef4444; }
+.fpc-row-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.fpc-go-btn {
+  background: linear-gradient(135deg,#7c3aed,#a259ff);
+  color: #fff; border: none; border-radius: 7px;
+  padding: 5px 10px; font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem; font-weight: 700; cursor: pointer;
+  text-decoration: none; display: inline-flex; align-items: center;
+  transition: opacity 0.15s; white-space: nowrap;
+}
+.fpc-go-btn:hover { opacity: 0.85; }
+.fpc-cancel-btn {
+  background: none; border: 1px solid rgba(255,255,255,0.1); border-radius: 7px;
+  padding: 5px 8px; font-size: 0.72rem; color: #8a8a8f; cursor: pointer;
+  transition: all 0.15s; line-height: 1;
+}
+.fpc-cancel-btn:hover { border-color: rgba(239,68,68,0.4); color: #ef4444; }
+html[data-theme="light"] #floatingPayCart { background: #fff; border-color: rgba(162,89,255,0.3); }
+html[data-theme="light"] .fpc-prod-name { color: #1a1a1a; }
+html[data-theme="light"] .fpc-row:hover { background: rgba(0,0,0,0.02); }
+html[data-theme="light"] .fpc-header { border-bottom-color: rgba(0,0,0,0.07); }
+html[data-theme="light"] .fpc-row { border-bottom-color: rgba(0,0,0,0.05); }
+@media(max-width:480px) {
+  #floatingPayCart { min-width: calc(100vw - 32px); bottom: 16px; }
+  .fpc-prod-name { max-width: 110px; }
+}
+</style>
+
+<div id="floatingPayCart">
+  <div class="fpc-header">
+    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Payments pending
+    <span class="fpc-header-count" id="fpcCount"></span>
+  </div>
+  <div class="fpc-list" id="fpcList"></div>
+</div>
+
+<script>
+(function(){
+  var cart = document.getElementById('floatingPayCart');
+  var listEl = document.getElementById('fpcList');
+  var countEl = document.getElementById('fpcCount');
+  var timerIntervals = {};
+  var onPayPage = window.location.pathname.startsWith('/pay/');
+
+  function getAllPending() {
+    var result = [];
+    var keysToRemove = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      if (key && key.startsWith('shadowPay_')) {
+        try {
+          var d = JSON.parse(localStorage.getItem(key));
+          if (new Date(d.expiresAt) > new Date()) {
+            result.push(d);
+          } else {
+            keysToRemove.push(key);
+          }
+        } catch(e) { keysToRemove.push(key); }
+      }
+    }
+    keysToRemove.forEach(function(k){ localStorage.removeItem(k); });
+    return result;
+  }
+
+  function fmtTime(secs) {
+    var m = Math.floor(secs / 60), s = secs % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s + ' remaining';
+  }
+
+  function startRowTimer(row, expiresAt, productId) {
+    if (timerIntervals[productId]) clearInterval(timerIntervals[productId]);
+    var timerEl = row.querySelector('.fpc-timer');
+    function tick() {
+      var left = Math.max(0, Math.floor((new Date(expiresAt) - new Date()) / 1000));
+      timerEl.textContent = fmtTime(left);
+      timerEl.className = 'fpc-timer' + (left < 120 ? ' urgent' : '');
+      if (left === 0) {
+        clearInterval(timerIntervals[productId]);
+        localStorage.removeItem('shadowPay_' + productId);
+        row.remove();
+        refreshCart();
+      }
+    }
+    tick();
+    timerIntervals[productId] = setInterval(tick, 1000);
+  }
+
+  function buildRow(data) {
+    var coinLabel = data.coin === 'btc' ? '₿' : 'ɱ';
+    var coinClass = data.coin === 'btc' ? 'btc' : 'xmr';
+    var title = data.productTitle || ('Payment ' + (data.id || '').slice(0,6));
+    var row = document.createElement('div');
+    row.className = 'fpc-row';
+    row.dataset.productId = data.productId;
+    row.innerHTML =
+      '<div class="fpc-coin-badge ' + coinClass + '">' + coinLabel + '</div>' +
+      '<div class="fpc-info">' +
+        '<div class="fpc-prod-name" title="' + title.replace(/"/g,'&quot;') + '">' + title + '</div>' +
+        '<div class="fpc-timer">--:--</div>' +
+      '</div>' +
+      '<div class="fpc-row-actions">' +
+        '<a href="/pay/' + data.id + '" class="fpc-go-btn">View →</a>' +
+        '<button class="fpc-cancel-btn" type="button" title="Cancel">✕</button>' +
+      '</div>';
+    row.querySelector('.fpc-cancel-btn').addEventListener('click', function(){ cancelRow(data); });
+    startRowTimer(row, data.expiresAt, data.productId);
+    return row;
+  }
+
+  function cancelRow(data) {
+    localStorage.removeItem('shadowPay_' + data.productId);
+    if (timerIntervals[data.productId]) {
+      clearInterval(timerIntervals[data.productId]);
+      delete timerIntervals[data.productId];
+    }
+    fetch('/api/pay/' + data.id + '/cancel', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+    }).catch(function(){});
+    refreshCart();
+  }
+
+  function refreshCart() {
+    if (onPayPage) return;
+    var payments = getAllPending();
+    listEl.innerHTML = '';
+    Object.keys(timerIntervals).forEach(function(k){ clearInterval(timerIntervals[k]); });
+    timerIntervals = {};
+
+    if (payments.length === 0) {
+      cart.classList.remove('show');
+      return;
+    }
+    payments.forEach(function(p){ listEl.appendChild(buildRow(p)); });
+    countEl.textContent = payments.length;
+    cart.classList.add('show');
+  }
+
+  // Initial render
+  refreshCart();
+
+  // Re-check every 15s (picks up new payments from other tabs)
+  setInterval(refreshCart, 15000);
+
+  // Allow payment page to trigger refresh when returning
+  window.fpcRefresh = refreshCart;
+})();
+</script>
+
+<script src="/static/main.js" defer></script>
+
+{{if .Session}}
+<script>
+/* ── GLOBAL NOTIFICATIONS ── */
+(function(){
+  var lastID = parseInt(localStorage.getItem('shadow_notif_last_id')||'0',10);
+  var initialized = lastID > 0;
+  var toastTimer = null;
+  var toast = document.getElementById('globalNotifToast');
+  var queue = [];
+  var showing = false;
+
+  function isMuted(username){
+    return localStorage.getItem('shadow_muted_'+username)==='1';
+  }
+
+  function playBeep(){
+    try{
+      var ac = new(window.AudioContext||window.webkitAudioContext)();
+      var osc = ac.createOscillator();
+      var gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.type='sine';
+      osc.frequency.value=780;
+      gain.gain.setValueAtTime(0.22,ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.35);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime+0.35);
+      setTimeout(function(){try{ac.close();}catch(e){}},600);
+    }catch(e){}
+  }
+
+  function showNext(){
+    if(!queue.length){ showing=false; return; }
+    showing=true;
+    var item=queue.shift();
+    document.getElementById('gntFrom').textContent='Message from @'+item.from;
+    var preview=item.content.length>60?item.content.slice(0,60)+'…':item.content;
+    document.getElementById('gntMsg').textContent=preview;
+    toast.classList.remove('hide');
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){
+      toast.classList.remove('show');
+      toast.classList.add('hide');
+      setTimeout(showNext,350);
+    },2500);
+  }
+
+  function enqueueNotif(from,content){
+    queue.push({from:from,content:content});
+    if(!showing) showNext();
+  }
+
+  function isActiveChat(from){
+    if(window.location.pathname!=='/chat') return false;
+    if(typeof activeChat==='undefined') return false;
+    return activeChat===from;
+  }
+
+  function poll(){
+    fetch('/api/chat/notifications/poll?after_id='+lastID,{credentials:'same-origin'})
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(data){
+        if(!data||!Array.isArray(data.notifications)) return;
+        var maxID=lastID;
+        data.notifications.forEach(function(n){
+          if(n.msg_id>maxID) maxID=n.msg_id;
+          if(initialized&&!isActiveChat(n.from)&&!isMuted(n.from)){
+            var notifOn = localStorage.getItem('shadow_chat_notif') !== '0';
+            var soundOn = localStorage.getItem('shadow_chat_sound') !== '0';
+            if(notifOn) enqueueNotif(n.from,n.content);
+            if(soundOn) playBeep();
+          }
+        });
+        if(maxID!==lastID){
+          lastID=maxID;
+          localStorage.setItem('shadow_notif_last_id',lastID);
+        }
+        if(!initialized) initialized=true;
+      }).catch(function(){});
+  }
+
+  /* First poll after 1.5s (init), then every 5s */
+  setTimeout(poll,1500);
+  setInterval(poll,5000);
+})();
+</script>
+
+<div id="banOverlay" style="display:{{if .Banned}}flex{{else}}none{{end}};position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#0d0d0f;border:1px solid rgba(255,69,69,0.4);border-radius:16px;padding:2.5rem 2rem;max-width:420px;width:90%;text-align:center;font-family:'Space Grotesk',sans-serif;">
+    <div style="width:56px;height:56px;background:rgba(255,69,69,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FF4545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>
+    </div>
+    <h2 style="color:#F2F2F0;font-size:1.3rem;font-weight:700;margin-bottom:0.6rem;">Account Banned</h2>
+    <p style="color:#8A8A8F;font-size:0.9rem;line-height:1.6;margin-bottom:1.5rem;">Your account has been banned by an administrator. You will be logged out in <strong id="banCountdown" style="color:#FF4545;">10</strong> seconds.</p>
+    <form id="banLogoutForm" method="POST" action="/logout">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <button type="submit" style="background:rgba(255,69,69,0.15);color:#FF4545;border:1px solid rgba(255,69,69,0.3);border-radius:8px;padding:0.55rem 1.4rem;font-family:inherit;font-size:0.9rem;font-weight:600;cursor:pointer;">Logout Now</button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  var overlay = document.getElementById('banOverlay');
+  var countdownEl = document.getElementById('banCountdown');
+  var banTimer = null;
+  var pollInterval = null;
+
+  function startBanCountdown() {
+    if (banTimer) return;
+    var secs = 10;
+    countdownEl.textContent = secs;
+    overlay.style.display = 'flex';
+    banTimer = setInterval(function(){
+      secs--;
+      countdownEl.textContent = secs;
+      if (secs <= 0) {
+        clearInterval(banTimer);
+        document.getElementById('banLogoutForm').submit();
+      }
+    }, 1000);
+  }
+
+  if (overlay.style.display === 'flex') {
+    startBanCountdown();
+  }
+
+  function pollStatus() {
+    fetch('/api/status', {credentials:'same-origin'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.status === 'banned') {
+          clearInterval(pollInterval);
+          startBanCountdown();
+        } else if (d.status === 'deleted') {
+          clearInterval(pollInterval);
+          window.location.href = '/login';
+        } else if (!d.authenticated) {
+          clearInterval(pollInterval);
+          window.location.href = '/login';
+        }
+      })
+      .catch(function(){});
+  }
+
+  pollInterval = setInterval(pollStatus, 5000);
+})();
+
+(function(){
+  function sendHB(){
+    fetch('/api/heartbeat',{credentials:'same-origin'}).catch(function(){});
+  }
+  sendHB();
+  setInterval(function(){ if(!document.hidden) sendHB(); }, 30000);
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden) sendHB();
+  });
+})();
+</script>
+{{end}}
+</body>
+</html>
+{{end}}

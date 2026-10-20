@@ -1,0 +1,81 @@
+{{define "title"}}Register — Shadow{{end}}
+
+{{define "content"}}
+<section class="auth-section">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <h2>Create account</h2>
+      <p>No email required — your username is all you need</p>
+    </div>
+
+    {{if .Error}}
+    <div class="auth-error" role="alert">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      {{.Error}}
+    </div>
+    {{end}}
+
+    <form method="POST" action="/register" class="auth-form" novalidate>
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+
+      <div class="field-group">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          autocomplete="username"
+          autocapitalize="none"
+          spellcheck="false"
+          required
+          placeholder="pick_a_username"
+          minlength="3"
+          maxlength="30"
+          pattern="[a-zA-Z0-9_]+"
+        >
+        <span class="field-hint">3–30 characters. Letters, numbers, underscore only.</span>
+      </div>
+
+      <div class="field-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          autocomplete="new-password"
+          required
+          placeholder="••••••••"
+          minlength="8"
+        >
+        <span class="field-hint">At least 8 characters.</span>
+      </div>
+
+      <div class="field-group">
+        <label for="confirm_password">Confirm password</label>
+        <input
+          type="password"
+          id="confirm_password"
+          name="confirm_password"
+          autocomplete="new-password"
+          required
+          placeholder="••••••••"
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full">Create account</button>
+    </form>
+
+    <p class="auth-footer">
+      Already have an account? <a href="/login">Sign in</a>
+    </p>
+
+    <div class="privacy-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      No email. No trackers. Passwords hashed with Argon2id.
+    </div>
+  </div>
+</section>
+{{end}}

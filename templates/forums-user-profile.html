@@ -1,0 +1,335 @@
+{{define "title"}}{{if .ProfileUser.DisplayName}}{{.ProfileUser.DisplayName}}{{else}}{{.ProfileUser.Username}}{{end}} — Shadow Forums{{end}}
+
+{{define "content"}}
+<style>
+  :root { --left-panel-bg: #0c0c0e; }
+  html[data-theme="light"] { --left-panel-bg: #e8e7e5; }
+  footer { margin-left: 0; }
+
+  .fup-page {
+    max-width: 760px; margin: 0 auto; padding: 108px 24px 80px;
+  }
+
+  /* Banner + avatar top block */
+  .fup-top { position: relative; margin-bottom: 56px; }
+  .fup-banner {
+    width: 100%; height: 140px; border-radius: 16px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    overflow: hidden;
+  }
+  .fup-banner-img { width: 100%; height: 100%; object-fit: cover; }
+
+  .fup-avatar {
+    position: absolute; bottom: -44px; left: 20px;
+    width: 88px; height: 88px; border-radius: 50%;
+    border: 4px solid var(--bg); background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 700;
+    color: var(--text-dim); overflow: hidden; z-index: 2;
+    text-transform: uppercase;
+  }
+  .fup-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Header below banner */
+  .fup-header {
+    padding: 0 4px 20px; border-bottom: 1px solid var(--line); margin-bottom: 24px;
+  }
+  .fup-header-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; margin-bottom: 10px;
+  }
+  .fup-nameblock { flex: 1; min-width: 0; }
+  .fup-name {
+    font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; font-weight: 700;
+    color: var(--text); letter-spacing: -0.02em; margin-bottom: 2px;
+  }
+  .fup-username {
+    font-size: 0.8rem; color: var(--text-dimmer);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .fup-bio {
+    font-size: 0.88rem; color: var(--text-dim); margin-top: 8px;
+    line-height: 1.5; max-width: 480px;
+  }
+
+  .fup-stats {
+    display: flex; gap: 24px; margin-top: 14px; flex-wrap: wrap;
+  }
+  .fup-stat {
+    display: flex; flex-direction: column; align-items: flex-start;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .fup-stat-val {
+    font-size: 1.05rem; font-weight: 700; color: var(--text);
+  }
+  .fup-stat-lbl {
+    font-size: 0.66rem; color: var(--text-dimmer); text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  .fup-actions {
+    display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; align-items: center;
+  }
+  .fup-btn {
+    padding: 7px 16px; border-radius: 8px; font-size: 0.78rem; font-weight: 600;
+    border: 1px solid var(--line); background: transparent; color: var(--text-dim);
+    cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+    gap: 6px; transition: border-color 0.2s, color 0.2s, background 0.2s;
+    font-family: 'Space Grotesk', sans-serif; white-space: nowrap;
+  }
+  .fup-btn:hover { border-color: var(--text-dimmer); color: var(--text); }
+  .fup-btn-primary { background: #6fe4a0; color: #050506; border-color: #6fe4a0; }
+  .fup-btn-primary:hover { background: #5bc87a; border-color: #5bc87a; }
+  .fup-btn-following { background: none; color: var(--text-dim); border-color: var(--line); }
+  .fup-btn-following:hover { border-color: #E05555; color: #E05555; }
+
+  .fup-tabs {
+    display: flex; gap: 0; border-bottom: 1px solid var(--line); margin-bottom: 24px;
+  }
+  .fup-tab {
+    padding: 10px 20px; font-size: 0.82rem; font-weight: 600; color: var(--text-dimmer);
+    border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer;
+    text-decoration: none; transition: color 0.2s, border-color 0.2s;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .fup-tab:hover { color: var(--text-dim); }
+  .fup-tab.active { color: var(--text); border-bottom-color: var(--up); }
+
+  /* Post cards */
+  .fup-post {
+    border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+    padding: 18px 20px; margin-bottom: 14px; transition: border-color 0.2s;
+  }
+  .fup-post:hover { border-color: var(--text-dimmer); }
+
+  .fup-post-meta {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-dimmer);
+    margin-bottom: 8px;
+  }
+  .fup-post-tag {
+    padding: 2px 8px; border-radius: 100px; border: 1px solid var(--line);
+    color: var(--text-dim); text-decoration: none;
+  }
+  .fup-post-title {
+    font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 600;
+    color: var(--text); text-decoration: none; display: block; margin-bottom: 6px;
+    letter-spacing: -0.01em; transition: color 0.2s;
+  }
+  .fup-post-title:hover { color: var(--up); }
+  .fup-post-excerpt {
+    font-size: 0.85rem; color: var(--text-dim); line-height: 1.6;
+    margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .fup-post-footer {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 0.75rem; color: var(--text-dimmer); font-family: 'JetBrains Mono', monospace;
+  }
+  .fup-post-footer svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; vertical-align: middle; }
+
+  /* Reply cards */
+  .fup-reply {
+    border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+    padding: 16px 20px; margin-bottom: 14px; transition: border-color 0.2s;
+  }
+  .fup-reply:hover { border-color: var(--text-dimmer); }
+  .fup-reply-context {
+    font-size: 0.72rem; color: var(--text-dimmer); font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .fup-reply-body {
+    font-size: 0.88rem; color: var(--text-dim); line-height: 1.6;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .fup-reply-footer {
+    display: flex; align-items: center; gap: 14px; margin-top: 10px;
+    font-size: 0.74rem; color: var(--text-dimmer); font-family: 'JetBrains Mono', monospace;
+  }
+
+  .fup-empty {
+    text-align: center; padding: 60px 20px; color: var(--text-dimmer);
+    font-size: 0.88rem; border: 1px dashed var(--line); border-radius: 14px;
+  }
+  .fup-empty-icon { font-size: 2rem; margin-bottom: 12px; opacity: 0.4; }
+
+  .fup-pagination {
+    display: flex; gap: 10px; justify-content: center; margin-top: 24px;
+  }
+  .fup-page-btn {
+    padding: 8px 18px; border-radius: 8px; border: 1px solid var(--line);
+    font-size: 0.8rem; color: var(--text-dim); text-decoration: none;
+    background: transparent; transition: border-color 0.2s, color 0.2s;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .fup-page-btn:hover { border-color: var(--text-dimmer); color: var(--text); }
+
+  @media (max-width: 600px) {
+    .fup-page { padding: 88px 12px 60px; }
+    .fup-banner { height: 110px; }
+    .fup-top { margin-bottom: 46px; }
+    .fup-avatar { width: 72px; height: 72px; font-size: 1.3rem; bottom: -36px; left: 14px; }
+    .fup-header-top { flex-direction: column; gap: 10px; }
+    .fup-actions { flex-direction: row; flex-wrap: wrap; }
+  }
+</style>
+
+<div class="fup-page">
+  <!-- Banner + Avatar -->
+  <div class="fup-top">
+    <div class="fup-banner">
+      {{if .ProfileUser.BannerPath}}<img src="/{{.ProfileUser.BannerPath}}" class="fup-banner-img" alt="">{{end}}
+    </div>
+    <div class="fup-avatar">
+      {{if .ProfileUser.AvatarPath}}<img src="/{{.ProfileUser.AvatarPath}}" alt="{{.ProfileUser.Username}}">{{else}}{{if ge (len .ProfileUser.Username) 2}}{{slice .ProfileUser.Username 0 2 | upper}}{{else}}{{.ProfileUser.Username | upper}}{{end}}{{end}}
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="fup-header">
+    <div class="fup-header-top">
+      <div class="fup-nameblock">
+        <div class="fup-name">{{if .ProfileUser.DisplayName}}{{.ProfileUser.DisplayName}}{{else}}{{.ProfileUser.Username}}{{end}}</div>
+        <div class="fup-username">@{{.ProfileUser.Username}}</div>
+        {{if .ProfileUser.Bio}}<div class="fup-bio">{{.ProfileUser.Bio}}</div>{{end}}
+      </div>
+      {{if .Session}}
+      {{if ne .Session.UserID .ProfileUser.ID}}
+      <div class="fup-actions">
+        {{if .IsFollowing}}
+        <button class="fup-btn fup-btn-following" id="followBtn" onclick="toggleFollow(this)">Following</button>
+        {{else}}
+        <button class="fup-btn fup-btn-primary" id="followBtn" onclick="toggleFollow(this)">Follow</button>
+        {{end}}
+        <a href="/chat?with={{.ProfileUser.Username}}&friend=1" class="fup-btn">Add Friend</a>
+        <a href="/chat?with={{.ProfileUser.Username}}" class="fup-btn">Chat</a>
+      </div>
+      {{end}}
+      {{end}}
+    </div>
+    <div class="fup-stats">
+      <div class="fup-stat">
+        <div class="fup-stat-val">{{.PostCount}}</div>
+        <div class="fup-stat-lbl">Posts</div>
+      </div>
+      <div class="fup-stat">
+        <div class="fup-stat-val">{{.ReplyCount}}</div>
+        <div class="fup-stat-lbl">Replies</div>
+      </div>
+      <div class="fup-stat">
+        <div class="fup-stat-val">{{.TotalScore}}</div>
+        <div class="fup-stat-lbl">Score</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="fup-tabs">
+    <a href="/forums/u/{{.ProfileUser.Username}}?tab=posts" class="fup-tab{{if eq .Tab "posts"}} active{{end}}">
+      Posts ({{.PostCount}})
+    </a>
+    <a href="/forums/u/{{.ProfileUser.Username}}?tab=replies" class="fup-tab{{if eq .Tab "replies"}} active{{end}}">
+      Replies ({{.ReplyCount}})
+    </a>
+  </div>
+
+  <!-- Posts Tab -->
+  {{if eq .Tab "posts"}}
+    {{if .Posts}}
+      {{range .Posts}}
+      <div class="fup-post">
+        <div class="fup-post-meta">
+          {{if .ServerName}}<span>in <a href="/forums/server/{{.ServerSlug}}" style="color:var(--text-dim);text-decoration:none;">{{.ServerName}}</a></span><span>·</span>{{end}}
+          {{if .CategoryName}}<a href="/forums?cat={{.CategorySlug}}" class="fup-post-tag">{{.CategoryName}}</a>{{end}}
+          <span>{{call $.TimeAgo .CreatedAt}}</span>
+        </div>
+        <a href="/forums/post/{{.ID}}" class="fup-post-title">{{.Title}}</a>
+        {{if .Body}}<div class="fup-post-excerpt">{{.Body}}</div>{{end}}
+        <div class="fup-post-footer">
+          <span>
+            <svg viewBox="0 0 24 24"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg>
+            {{.Score}}
+          </span>
+          <span>
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {{.CommentCount}}
+          </span>
+          <span>
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            {{.ViewCount}}
+          </span>
+        </div>
+      </div>
+      {{end}}
+    {{else}}
+      <div class="fup-empty">
+        <div class="fup-empty-icon">📝</div>
+        No posts yet.
+      </div>
+    {{end}}
+  {{end}}
+
+  <!-- Replies Tab -->
+  {{if eq .Tab "replies"}}
+    {{if .Replies}}
+      {{range .Replies}}
+      <div class="fup-reply">
+        <div class="fup-reply-context">
+          <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Replied on post
+          <a href="/forums/post/{{.PostID}}" style="color:var(--text-dim);text-decoration:none;">→ view thread</a>
+          <span>·</span>
+          <span>{{call $.TimeAgo .CreatedAt}}</span>
+        </div>
+        <div class="fup-reply-body">{{.Body}}</div>
+        <div class="fup-reply-footer">
+          <span>
+            <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg>
+            {{.Score}}
+          </span>
+        </div>
+      </div>
+      {{end}}
+    {{else}}
+      <div class="fup-empty">
+        <div class="fup-empty-icon">💬</div>
+        No replies yet.
+      </div>
+    {{end}}
+  {{end}}
+
+  <!-- Pagination -->
+  {{if or .HasMore (gt .CurrentPage 1)}}
+  <div class="fup-pagination">
+    {{if gt .CurrentPage 1}}
+    <a href="/forums/u/{{.ProfileUser.Username}}?tab={{.Tab}}&page={{.PrevPage}}" class="fup-page-btn">← Prev</a>
+    {{end}}
+    {{if .HasMore}}
+    <a href="/forums/u/{{.ProfileUser.Username}}?tab={{.Tab}}&page={{add1 .CurrentPage}}" class="fup-page-btn">Next →</a>
+    {{end}}
+  </div>
+  {{end}}
+</div>
+
+<script>
+(function(){
+  var CSRF = '{{.CSRFToken}}';
+  var PROFILE_USER = '{{.ProfileUser.Username}}';
+
+  window.toggleFollow = function(btn){
+    fetch('/api/forums/user/'+PROFILE_USER+'/follow',{
+      method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'_csrf='+encodeURIComponent(CSRF)
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.following){
+        btn.textContent='Following';
+        btn.classList.remove('fup-btn-primary');
+      } else {
+        btn.textContent='Follow';
+        btn.classList.add('fup-btn-primary');
+      }
+    });
+  };
+})();
+</script>
+{{end}}

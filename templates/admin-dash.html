@@ -1,0 +1,30 @@
+{{define "admin-title"}}Dashboard{{end}}
+
+{{define "admin-content"}}
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <p>Platform overview at a glance.</p>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Users</div>
+    <div class="stat-value">{{.TotalUsers}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Online Now</div>
+    <div class="stat-value green">{{.OnlineCount}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Offline</div>
+    <div class="stat-value red">{{.OfflineCount}}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">Quick Actions</div>
+  <div class="action-row">
+    <a href="{{.AdminPath}}/users" class="btn btn-ghost">View All Users</a>
+  </div>
+</div>
+{{end}}

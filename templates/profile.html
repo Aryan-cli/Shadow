@@ -1,0 +1,706 @@
+{{define "profile"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.User.Username}} — Shadow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  (function(){
+    var s = localStorage.getItem('shadow-theme');
+    if(!s){var m=document.cookie.match(/(?:^|;\s*)shadow-theme=([^;]*)/);if(m)s=decodeURIComponent(m[1]);}
+    if(s === 'light') document.documentElement.setAttribute('data-theme','light');
+  })();
+</script>
+<style>
+:root {
+  --bg: #050506;
+  --surface: rgba(255,255,255,0.03);
+  --surface-hover: rgba(255,255,255,0.055);
+  --surface-card: rgba(255,255,255,0.038);
+  --text: #F2F2F0;
+  --text-dim: #8A8A8F;
+  --text-dimmer: #4A4A50;
+  --line: rgba(255,255,255,0.09);
+  --line-inner: rgba(255,255,255,0.06);
+  --nav-border: rgba(255,255,255,0.1);
+  --danger: #C9696B;
+  --topbar-h: 56px;
+}
+html[data-theme="light"] {
+  --bg: #F4F3F1;
+  --surface: rgba(0,0,0,0.025);
+  --surface-hover: rgba(0,0,0,0.045);
+  --surface-card: rgba(0,0,0,0.032);
+  --text: #15151A;
+  --text-dim: #6B6B72;
+  --text-dimmer: #A6A5AC;
+  --line: rgba(0,0,0,0.1);
+  --line-inner: rgba(0,0,0,0.06);
+  --nav-border: rgba(0,0,0,0.08);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Inter',sans-serif; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden; min-height:100vh;
+  transition:background .35s ease, color .35s ease;
+}
+a { color:inherit; text-decoration:none; }
+body::before {
+  content:''; position:fixed; inset:0;
+  background:radial-gradient(circle at 50% 0%, rgba(255,255,255,0.04), transparent 50%);
+  pointer-events:none; z-index:0;
+}
+:focus-visible { outline:1px solid rgba(255,255,255,0.4); outline-offset:3px; }
+
+/* ── NAV ── */
+.nav-wrap {
+  position:fixed; top:0; left:0; right:0; z-index:50;
+  height:var(--topbar-h);
+  display:flex; align-items:center; padding:0 20px;
+  background:rgba(5,5,6,0.8);
+  border-bottom:1px solid var(--line);
+  backdrop-filter:blur(20px) saturate(140%);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);
+  transition:background .35s ease;
+}
+html[data-theme="light"] .nav-wrap { background:rgba(244,243,241,0.85); }
+.nav-inner { width:100%; display:flex; align-items:center; gap:16px; }
+.logo {
+  display:flex; align-items:center; gap:9px;
+  font-family:'Space Grotesk',sans-serif; font-weight:600;
+  font-size:.95rem; letter-spacing:-.01em; white-space:nowrap; flex-shrink:0;
+}
+.theme-toggle {
+  width:28px; height:28px; border-radius:50%;
+  background:rgba(255,255,255,0.06); border:1px solid var(--line);
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background .35s ease, border-color .2s ease;
+  flex-shrink:0; padding:0;
+}
+html[data-theme="light"] .theme-toggle { background:rgba(0,0,0,0.04); }
+.theme-toggle:hover { border-color:var(--text-dimmer); }
+.theme-toggle svg { width:14px; height:14px; stroke:var(--text); fill:none; stroke-width:1.6; pointer-events:none; }
+.icon-moon { display:block; }
+.icon-sun  { display:none; }
+html[data-theme="light"] .icon-moon { display:none; }
+html[data-theme="light"] .icon-sun  { display:block; }
+.nav-sep { width:1px; height:20px; background:var(--line); flex-shrink:0; }
+.nav-breadcrumb {
+  display:flex; align-items:center; gap:8px;
+  font-size:.83rem; color:var(--text-dim);
+  font-family:'Space Grotesk',sans-serif;
+}
+.nav-breadcrumb span { color:var(--text-dimmer); }
+.nav-breadcrumb strong { color:var(--text); font-weight:500; }
+.nav-spacer { flex:1; }
+.nav-userpill {
+  display:flex; align-items:center; gap:8px;
+  padding:4px 12px 4px 5px; border-radius:100px;
+  border:1px solid var(--line); background:transparent;
+  color:var(--text); font-family:inherit;
+  font-size:.83rem; font-weight:500; text-decoration:none;
+  transition:border-color .2s ease;
+}
+.nav-userpill:hover { border-color:var(--text-dimmer); }
+.nav-avatar {
+  width:26px; height:26px; border-radius:50%;
+  background:linear-gradient(135deg,#6b6b76,#2a2a30);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.68rem; font-weight:600; color:#fff; flex-shrink:0;
+  overflow:hidden;
+}
+.nav-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+
+/* ── BTN ── */
+.btn {
+  font-family:'Inter',sans-serif; font-size:.84rem; font-weight:500;
+  padding:8px 18px; border-radius:100px; cursor:pointer;
+  transition:all .2s ease; border:1px solid transparent;
+  display:inline-flex; align-items:center; gap:7px;
+}
+.btn-ghost  { background:transparent; color:var(--text); border-color:var(--line); }
+.btn-ghost:hover { border-color:var(--text-dimmer); }
+.btn-primary { background:var(--text); color:var(--bg); border-color:var(--text); }
+.btn-primary:hover { opacity:.85; }
+.btn-sm { padding:6px 14px; font-size:.8rem; }
+.btn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.6; flex-shrink:0; }
+
+/* ── PAGE ── */
+.page-wrap {
+  padding-top:var(--topbar-h);
+  min-height:100vh;
+  position:relative; z-index:1;
+  display:flex; justify-content:center;
+}
+.profile-container {
+  width:100%; max-width:800px;
+  padding-bottom:80px;
+}
+
+/* ── BANNER ── */
+.banner-wrap {
+  position:relative;
+  height:220px;
+  background:linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 70%,#1a1a2e 100%);
+  overflow:hidden;
+}
+.banner-img {
+  width:100%; height:100%;
+  object-fit:cover; display:block;
+}
+.banner-overlay {
+  position:absolute; inset:0;
+  background:rgba(0,0,0,.5);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:opacity .2s ease; cursor:pointer;
+}
+.banner-wrap:hover .banner-overlay { opacity:1; }
+.banner-overlay-inner {
+  display:flex; flex-direction:column; align-items:center; gap:8px; color:#fff;
+}
+.banner-overlay-inner svg { width:28px; height:28px; stroke:#fff; fill:none; stroke-width:1.4; }
+.banner-overlay-inner span { font-size:.78rem; font-weight:500; letter-spacing:.08em; text-transform:uppercase; }
+
+/* ── PROFILE HEADER ── */
+.profile-header {
+  padding:0 32px;
+}
+.avatar-row {
+  display:flex; align-items:flex-end;
+  margin-top:-50px; margin-bottom:14px;
+}
+.avatar-wrap { position:relative; flex-shrink:0; }
+.profile-avatar {
+  width:100px; height:100px; border-radius:50%;
+  background:linear-gradient(135deg,#6b6b76,#2a2a30);
+  border:4px solid var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:2rem; font-weight:700; color:#fff;
+  overflow:hidden; transition:border-color .35s ease;
+  flex-shrink:0; position:relative;
+}
+.profile-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.avatar-cam {
+  position:absolute; inset:4px; border-radius:50%;
+  background:rgba(0,0,0,.55);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:opacity .2s ease; cursor:pointer;
+}
+.avatar-wrap:hover .avatar-cam { opacity:1; }
+.avatar-cam svg { width:22px; height:22px; stroke:#fff; fill:none; stroke-width:1.4; }
+.online-dot {
+  position:absolute; bottom:6px; right:6px;
+  width:16px; height:16px; border-radius:50%;
+  background:#3FFF8D; border:3px solid var(--bg);
+  transition:border-color .35s ease;
+}
+.online-dot.dot-idle { background:#FBBF24; }
+.online-dot.dot-offline { background:#6B6B76; }
+.online-dot.dot-hidden { background:#6B6B76; }
+
+/* header-actions: floated right, aligned to bottom of avatar */
+.header-actions {
+  margin-left:auto;
+  display:flex; gap:8px; align-items:flex-end;
+  padding-bottom:4px;
+}
+
+/* ── PROFILE INFO ── */
+.profile-info { padding:0 32px; }
+
+/* VIEW mode */
+.info-display-name {
+  font-family:'Space Grotesk',sans-serif;
+  font-size:1.55rem; font-weight:700; letter-spacing:-.02em;
+  line-height:1.2; margin-bottom:4px;
+}
+.info-username {
+  font-size:.88rem; color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace; margin-bottom:12px;
+}
+.info-bio {
+  font-size:.9rem; color:var(--text-dim);
+  max-width:520px; line-height:1.7;
+  margin-bottom:18px; white-space:pre-wrap;
+}
+.info-bio.empty { font-style:italic; color:var(--text-dimmer); }
+.info-meta {
+  display:flex; gap:18px; flex-wrap:wrap;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.71rem; color:var(--text-dimmer);
+  margin-bottom:24px;
+}
+.info-meta span { display:flex; align-items:center; gap:6px; }
+.info-meta svg { width:12px; height:12px; stroke:currentColor; fill:none; stroke-width:1.5; }
+
+/* EDIT mode — hidden by default */
+.edit-mode { display:none; }
+.edit-mode.show { display:block; }
+.view-mode.hide { display:none; }
+
+.field-label {
+  font-size:.71rem; font-family:'JetBrains Mono',monospace;
+  color:var(--text-dimmer); letter-spacing:.07em;
+  text-transform:uppercase; margin-bottom:6px;
+}
+.field-input {
+  width:100%;
+  background:var(--surface-card, rgba(255,255,255,0.038));
+  border:1px solid var(--line);
+  border-radius:10px; padding:10px 14px; color:var(--text);
+  font-family:'Inter',sans-serif; font-size:.9rem; outline:none;
+  transition:border-color .2s ease, background .2s ease;
+  resize:none;
+}
+.field-input:focus { border-color:rgba(255,255,255,.28); background:rgba(255,255,255,.05); }
+html[data-theme="light"] .field-input:focus { border-color:rgba(0,0,0,.22); background:rgba(0,0,0,.04); }
+.field-input::placeholder { color:var(--text-dimmer); }
+.field-hint { font-size:.73rem; color:var(--text-dimmer); margin-top:4px; }
+.edit-fields { display:flex; flex-direction:column; gap:14px; margin-bottom:2px; }
+
+/* profile divider */
+.profile-divider { height:1px; background:var(--line); margin:4px 32px 24px; }
+
+/* ── UPLOAD SPINNER ── */
+.upload-spinner {
+  display:none; position:fixed; inset:0; z-index:300;
+  background:rgba(0,0,0,.5); backdrop-filter:blur(6px);
+  align-items:center; justify-content:center;
+}
+.upload-spinner.active { display:flex; }
+.spinner-box {
+  background:var(--bg); border:1px solid var(--line);
+  border-radius:14px; padding:28px 36px;
+  text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px;
+}
+.spinner-ring {
+  width:36px; height:36px;
+  border:2px solid var(--line); border-top-color:var(--text);
+  border-radius:50%; animation:spin .7s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.spinner-text { font-size:.84rem; color:var(--text-dim); }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed; bottom:24px; right:24px; z-index:400;
+  background:var(--bg); border:1px solid var(--line);
+  border-radius:12px; padding:13px 18px;
+  box-shadow:0 16px 40px rgba(0,0,0,.5);
+  display:flex; align-items:center; gap:9px;
+  font-size:.85rem; pointer-events:none;
+  transform:translateY(70px); opacity:0;
+  transition:transform .3s ease, opacity .3s ease;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+.toast svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.6; flex-shrink:0; }
+.toast.success { border-color:rgba(63,255,141,.3); color:#3FFF8D; }
+.toast.error   { border-color:rgba(201,105,107,.3); color:#E08486; }
+
+/* ── RESPONSIVE ── */
+@media (max-width:600px) {
+  .banner-wrap { height:160px; }
+  .profile-avatar { width:80px; height:80px; font-size:1.5rem; }
+  .avatar-row { margin-top:-40px; }
+  .profile-header, .profile-info { padding:0 16px; }
+  .profile-divider { margin:4px 16px 20px; }
+  .info-display-name { font-size:1.25rem; }
+}
+@media (prefers-reduced-motion:reduce) {
+  * { animation:none !important; transition:none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<div class="nav-wrap">
+  <div class="nav-inner">
+    <div class="logo">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" type="button">
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="icon-sun"  viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+      </button>
+      <a href="/">Shadow</a>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-breadcrumb">
+      <a href="/">Home</a><span>›</span><strong>{{.User.Username}}</strong>
+    </div>
+    <div class="nav-spacer"></div>
+    {{if .Session}}
+    <a href="/settings" class="nav-userpill">
+      <div class="nav-avatar" id="navAvatar">
+        {{if .NavAvatarURL}}<img src="{{.NavAvatarURL}}" alt="">{{else}}{{.NavInitials}}{{end}}
+      </div>
+      {{.Session.Username}}
+    </a>
+    {{else}}
+    <a href="/login" style="font-size:.83rem;font-weight:500;color:var(--text-dim);text-decoration:none;padding:6px 14px;border:1px solid var(--line);border-radius:100px;">Login</a>
+    {{end}}
+  </div>
+</div>
+
+<!-- ── UPLOAD SPINNER ── -->
+<div class="upload-spinner" id="spinner">
+  <div class="spinner-box">
+    <div class="spinner-ring"></div>
+    <span class="spinner-text">Uploading…</span>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast">
+  <svg id="toastIcon" viewBox="0 0 24 24"></svg>
+  <span id="toastMsg"></span>
+</div>
+
+{{if .IsOwnProfile}}
+<input type="file" id="avatarInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
+<input type="file" id="bannerInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
+{{end}}
+
+<!-- ── PAGE ── -->
+<div class="page-wrap">
+<div class="profile-container">
+
+  <!-- BANNER -->
+  <div class="banner-wrap" id="bannerWrap">
+    {{if .BannerURL}}
+    <img class="banner-img" id="bannerImg" src="{{.BannerURL}}" alt="Banner">
+    {{else}}
+    <img class="banner-img" id="bannerImg" src="" alt="" style="display:none">
+    {{end}}
+    {{if .IsOwnProfile}}
+    <div class="banner-overlay" onclick="document.getElementById('bannerInput').click()">
+      <div class="banner-overlay-inner">
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span>Change Banner</span>
+      </div>
+    </div>
+    {{end}}
+  </div>
+
+  <!-- AVATAR + ACTIONS -->
+  <div class="profile-header">
+    <div class="avatar-row">
+      <div class="avatar-wrap" id="avatarWrap">
+        <div class="profile-avatar" id="profileAvatar">
+          {{if .AvatarURL}}
+          <img id="avatarImg" src="{{.AvatarURL}}" alt="Avatar">
+          {{else}}
+          <span id="avatarInitials">{{.Initials}}</span>
+          <img id="avatarImg" src="" alt="" style="display:none">
+          {{end}}
+        </div>
+        {{if .IsOwnProfile}}
+        <div class="avatar-cam" onclick="document.getElementById('avatarInput').click()">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        {{end}}
+        <div class="online-dot{{if eq .OnlineStatus "offline"}} dot-offline{{else if eq .OnlineStatus "idle"}} dot-idle{{else if eq .OnlineStatus "hidden"}} dot-hidden{{end}}"></div>
+      </div>
+      {{if and .IsOwnProfile .AvatarURL}}
+      <button id="removeAvatarBtn" onclick="removeAvatar()" style="position:absolute;bottom:-22px;left:0;background:none;border:none;font-size:.72rem;color:var(--danger);cursor:pointer;padding:0;font-family:inherit;">Remove photo</button>
+      {{end}}
+
+      <div class="header-actions" id="headerActions">
+        {{if .IsOwnProfile}}
+        <a href="/settings?section=account" class="btn btn-ghost btn-sm">
+          <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+          Edit Profile
+        </a>
+        {{else if .Session}}
+          {{if eq .FriendStatus "accepted"}}
+          <a href="/chat?with={{.User.Username}}" class="btn btn-ghost btn-sm">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Message
+          </a>
+          <button class="btn btn-ghost btn-sm" id="friendBtn" onclick="removeFriend()">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            Friends
+          </button>
+          {{else if eq .FriendStatus "pending_sent"}}
+          <a href="/chat?with={{.User.Username}}" class="btn btn-ghost btn-sm">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Message
+          </a>
+          <button class="btn btn-ghost btn-sm" id="friendBtn" disabled style="opacity:.5;cursor:not-allowed;">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+            Request Sent
+          </button>
+          {{else if eq .FriendStatus "pending_received"}}
+          <a href="/chat?with={{.User.Username}}" class="btn btn-ghost btn-sm">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Message
+          </a>
+          <button class="btn btn-ghost btn-sm" id="friendBtn" onclick="acceptFriend()" style="border-color:rgba(63,255,141,.4);color:#3FFF8D;">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Accept Request
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="removeFriend()" style="color:var(--danger);">Decline</button>
+          {{else}}
+          <a href="/chat?with={{.User.Username}}" class="btn btn-ghost btn-sm">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Message
+          </a>
+          <button class="btn btn-ghost btn-sm" id="friendBtn" onclick="addFriend()">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+            Add Friend
+          </button>
+          {{end}}
+        {{end}}
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE INFO -->
+  <div class="profile-info">
+
+    <!-- DISPLAY NAME -->
+    <div class="view-mode" id="viewDisplayName">
+      <div class="info-display-name">{{if .User.DisplayName}}{{.User.DisplayName}}{{else}}{{.User.Username}}{{end}}</div>
+    </div>
+    {{if .IsOwnProfile}}
+    <div class="edit-mode" id="editDisplayName">
+      <div class="field-label">Display Name</div>
+      <input type="text" class="field-input" id="inputDisplayName"
+        value="{{if .User.DisplayName}}{{.User.DisplayName}}{{else}}{{.User.Username}}{{end}}"
+        placeholder="Your display name" maxlength="100">
+      <div class="field-hint">Max 100 characters.</div>
+    </div>
+    {{end}}
+
+    <!-- USERNAME (always shown) -->
+    <div class="info-username">@{{.User.Username}}</div>
+
+    <!-- BIO -->
+    <div class="view-mode" id="viewBio">
+      {{if .User.Bio}}
+      <div class="info-bio">{{.User.Bio}}</div>
+      {{else}}
+      <div class="info-bio empty">{{if .IsOwnProfile}}Click "Edit Profile" to add a bio…{{else}}No bio yet.{{end}}</div>
+      {{end}}
+    </div>
+    {{if .IsOwnProfile}}
+    <div class="edit-mode" id="editBio" style="margin-bottom:14px;">
+      <div class="field-label">Bio</div>
+      <textarea class="field-input" id="inputBio" rows="3"
+        placeholder="Tell people a little about yourself… (optional)" maxlength="300">{{.User.Bio}}</textarea>
+      <div class="field-hint">Max 300 characters.</div>
+    </div>
+    {{end}}
+
+    <!-- hidden form for actual submit -->
+    {{if .IsOwnProfile}}
+    <form method="POST" action="/profile/update" id="editForm" style="display:none">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <input type="hidden" name="display_name" id="hiddenDisplayName">
+      <input type="hidden" name="bio" id="hiddenBio">
+    </form>
+    {{end}}
+
+    <div class="info-meta">
+      <span>
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Joined {{.User.CreatedAt.Format "January 2006"}}
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        {{.LastSeenText}}
+      </span>
+    </div>
+  </div>
+
+  <div class="profile-divider"></div>
+
+</div>
+</div>
+
+<script>
+/* ── THEME ── */
+(function(){
+  var btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  btn.addEventListener('click', function(){
+    var root = document.documentElement;
+    var isLight = root.getAttribute('data-theme') === 'light';
+    var theme = isLight ? 'dark' : 'light';
+    localStorage.setItem('shadow-theme', theme);
+    document.cookie = 'shadow-theme=' + theme + '; path=/; max-age=31536000; samesite=strict';
+    if(isLight){ root.removeAttribute('data-theme'); } else { root.setAttribute('data-theme','light'); }
+  });
+})();
+
+/* ── INLINE EDIT ── */
+{{if .IsOwnProfile}}
+function startEdit(){
+  document.getElementById('editBtn').style.display    = 'none';
+  document.getElementById('cancelBtn').style.display  = 'inline-flex';
+  document.getElementById('saveBtn').style.display    = 'inline-flex';
+
+  document.getElementById('viewDisplayName').classList.add('hide');
+  document.getElementById('editDisplayName').classList.add('show');
+  document.getElementById('viewBio').classList.add('hide');
+  document.getElementById('editBio').classList.add('show');
+
+  document.getElementById('inputDisplayName').focus();
+}
+
+function cancelEdit(){
+  document.getElementById('editBtn').style.display    = 'inline-flex';
+  document.getElementById('cancelBtn').style.display  = 'none';
+  document.getElementById('saveBtn').style.display    = 'none';
+
+  document.getElementById('viewDisplayName').classList.remove('hide');
+  document.getElementById('editDisplayName').classList.remove('show');
+  document.getElementById('viewBio').classList.remove('hide');
+  document.getElementById('editBio').classList.remove('show');
+}
+
+function submitEdit(){
+  var dn = document.getElementById('inputDisplayName').value.trim();
+  var bio = document.getElementById('inputBio').value.trim();
+  document.getElementById('hiddenDisplayName').value = dn;
+  document.getElementById('hiddenBio').value = bio;
+  document.getElementById('editForm').submit();
+}
+
+/* ── UPLOADS ── */
+var csrf = '{{.CSRFToken}}';
+
+function doUpload(file, field, endpoint, onDone){
+  var sp = document.getElementById('spinner');
+  sp.classList.add('active');
+  var fd = new FormData();
+  fd.append(field, file);
+  fd.append('_csrf', csrf);
+  fetch(endpoint, {method:'POST', body:fd})
+    .then(function(r){
+      sp.classList.remove('active');
+      if(!r.ok){ r.text().then(function(t){ showToast(t||'Upload failed','error'); }); return; }
+      r.json().then(function(j){ onDone(j.url); });
+    })
+    .catch(function(e){
+      sp.classList.remove('active');
+      showToast('Upload failed','error');
+    });
+}
+
+document.getElementById('avatarInput').addEventListener('change', function(e){
+  var f = e.target.files[0]; if(!f) return;
+  doUpload(f, 'avatar', '/profile/avatar', function(url){
+    var img = document.getElementById('avatarImg');
+    var ini = document.getElementById('avatarInitials');
+    img.src = url; img.style.display = 'block';
+    if(ini) ini.style.display = 'none';
+    var nav = document.getElementById('navAvatar');
+    if(nav) nav.innerHTML = '<img src="'+url+'" alt="">';
+    showToast('Avatar updated!','success');
+  });
+  this.value='';
+});
+
+function removeAvatar(){
+  var fd = new FormData();
+  fd.append('_csrf', csrf);
+  fetch('/settings/avatar/remove', {method:'POST', body:fd})
+    .then(function(r){
+      if(!r.ok){ r.text().then(function(t){ showToast(t||'Error','error'); }); return; }
+      var img = document.getElementById('avatarImg');
+      var ini = document.getElementById('avatarInitials');
+      var nav = document.getElementById('navAvatar');
+      var btn = document.getElementById('removeAvatarBtn');
+      if(img){ img.src=''; img.style.display='none'; }
+      if(ini){ ini.style.display=''; }
+      if(nav){ nav.innerHTML = nav.textContent || ''; }
+      if(btn){ btn.style.display='none'; }
+      showToast('Avatar removed','success');
+    })
+    .catch(function(){ showToast('Error removing avatar','error'); });
+}
+
+document.getElementById('bannerInput').addEventListener('change', function(e){
+  var f = e.target.files[0]; if(!f) return;
+  doUpload(f, 'banner', '/profile/banner', function(url){
+    var img = document.getElementById('bannerImg');
+    var wrap = document.getElementById('bannerWrap');
+    img.src = url; img.style.display = 'block';
+    wrap.style.background = 'none';
+    showToast('Banner updated!','success');
+  });
+  this.value='';
+});
+{{end}}
+
+/* ── FRIEND ACTIONS ── */
+{{if and (not .IsOwnProfile) .Session}}
+var CSRF_TOKEN = '{{.CSRFToken}}';
+var TARGET_USER = '{{.User.Username}}';
+
+function addFriend(){
+  var fd = new FormData();
+  fd.append('username', TARGET_USER);
+  fd.append('_csrf', CSRF_TOKEN);
+  fetch('/api/chat/friend/send',{method:'POST',body:fd,credentials:'same-origin'})
+    .then(function(r){
+      if(r.ok){
+        var btn = document.getElementById('friendBtn');
+        if(btn){
+          btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" style="stroke:currentColor;fill:none;stroke-width:1.6;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg> Request Sent';
+          btn.disabled=true; btn.style.opacity='.5'; btn.style.cursor='not-allowed';
+          btn.onclick=null;
+        }
+        showToast('Friend request sent!','success');
+      } else { r.text().then(function(t){ showToast(t||'Error','error'); }); }
+    }).catch(function(){ showToast('Error','error'); });
+}
+
+function acceptFriend(){
+  var fd = new FormData();
+  fd.append('username', TARGET_USER);
+  fd.append('_csrf', CSRF_TOKEN);
+  fetch('/api/chat/friend/accept',{method:'POST',body:fd,credentials:'same-origin'})
+    .then(function(r){
+      if(r.ok){ showToast('Friend added!','success'); setTimeout(function(){window.location.reload();},800); }
+      else { r.text().then(function(t){ showToast(t||'Error','error'); }); }
+    }).catch(function(){ showToast('Error','error'); });
+}
+
+function removeFriend(){
+  var fd = new FormData();
+  fd.append('username', TARGET_USER);
+  fd.append('_csrf', CSRF_TOKEN);
+  fetch('/api/chat/friend/reject',{method:'POST',body:fd,credentials:'same-origin'})
+    .then(function(r){
+      if(r.ok){ showToast('Removed.','success'); setTimeout(function(){window.location.reload();},800); }
+      else { r.text().then(function(t){ showToast(t||'Error','error'); }); }
+    }).catch(function(){ showToast('Error','error'); });
+}
+{{end}}
+
+/* ── TOAST ── */
+function showToast(msg, type){
+  var t   = document.getElementById('toast');
+  var m   = document.getElementById('toastMsg');
+  var ico = document.getElementById('toastIcon');
+  t.className = 'toast ' + (type||'success');
+  m.textContent = msg;
+  ico.innerHTML = type === 'error'
+    ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+    : '<polyline points="20 6 9 17 4 12"/>';
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+</script>
+</body>
+</html>
+{{end}}

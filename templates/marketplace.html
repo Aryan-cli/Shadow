@@ -1,0 +1,396 @@
+{{define "title"}}Shadow — Marketplace{{end}}
+
+{{define "content"}}
+<style>
+/* ===== MARKETPLACE ===== */
+.mkt-wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 140px 16px 80px;
+}
+
+
+/* ── Search ── */
+.mkt-search-wrap {
+  max-width: 600px;
+  margin: 0 auto 1.4rem;
+  position: relative;
+}
+.mkt-search-row .mkt-search-wrap {
+  margin: 0;
+  flex: 1;
+}
+.mkt-search-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.85rem 3rem 0.85rem 1.2rem;
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.mkt-search-input::placeholder { color: var(--text-dimmer); }
+.mkt-search-input:focus {
+  border-color: rgba(162,89,255,0.4);
+  box-shadow: 0 0 0 3px rgba(162,89,255,0.08);
+}
+.mkt-search-btn {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: var(--text-dim);
+  display: flex; align-items: center; padding: 4px; transition: color 0.15s;
+}
+.mkt-search-btn:hover { color: var(--text); }
+.mkt-search-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* ── Category Tabs ── */
+.mkt-cats {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 1.5rem;
+  scrollbar-width: none;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.mkt-cats::-webkit-scrollbar { display: none; }
+.mkt-cat-btn {
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 0.42rem 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.mkt-cat-btn:hover { background: var(--surface2); color: var(--text); }
+.mkt-cat-btn.active {
+  background: rgba(162,89,255,0.15);
+  border-color: rgba(162,89,255,0.4);
+  color: #a259ff;
+}
+
+/* ── Search Row ── */
+.mkt-search-row {
+  display: flex; align-items: stretch; gap: 10px; margin-bottom: 1rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── My Purchases Btn (icon only) ── */
+.mkt-purchases-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(162,89,255,0.12); border: 1px solid rgba(162,89,255,0.3);
+  color: #a259ff; border-radius: 12px;
+  width: 50px;
+  text-decoration: none; flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.mkt-purchases-btn:hover { background: rgba(162,89,255,0.2); border-color: rgba(162,89,255,0.5); }
+.mkt-purchases-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── Admin bar ── */
+.mkt-admin-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.2rem;
+}
+.mkt-add-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--accent); color: var(--accent-contrast);
+  border: none; border-radius: 10px; padding: 0.6rem 1.2rem;
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.88rem; font-weight: 600;
+  cursor: pointer; text-decoration: none; transition: opacity 0.15s ease;
+}
+.mkt-add-btn:hover { opacity: 0.85; }
+.mkt-add-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+
+/* ── Product Grid ── */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+@media (min-width: 1100px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px)  { .product-grid { grid-template-columns: 1fr; } }
+
+/* ── Product Card (screenshot style) ── */
+.product-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  animation: cardIn 0.3s ease both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.product-card:hover {
+  border-color: rgba(162,89,255,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+
+.product-img-wrap {
+  position: relative; width: 100%; padding-top: 62%;
+  background: #0a0a0c; overflow: hidden; flex-shrink: 0;
+}
+.product-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; transition: transform 0.35s ease;
+}
+.product-card:hover .product-img { transform: scale(1.05); }
+.product-img-placeholder {
+  position: absolute; inset: 0; display: flex;
+  align-items: center; justify-content: center; color: var(--text-dimmer);
+  background: rgba(255,255,255,0.02);
+}
+.product-img-placeholder svg { width: 44px; height: 44px; opacity: 0.3; }
+
+.product-cat-badge {
+  position: absolute; top: 10px; left: 10px;
+  background: rgba(0,0,0,0.72); color: #fff;
+  font-size: 0.68rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif;
+  padding: 3px 10px; border-radius: 20px; letter-spacing: 0.05em;
+  backdrop-filter: blur(8px);
+}
+
+.product-body {
+  padding: 0.9rem; display: flex; flex-direction: column; flex: 1;
+  background: var(--surface);
+}
+
+.product-title {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.3rem; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.product-desc {
+  font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; flex: 1;
+  margin-bottom: 0.8rem;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.product-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+}
+
+.product-price {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--text);
+}
+
+.product-stars {
+  display: flex; align-items: center; gap: 3px;
+}
+.star-icon {
+  width: 14px; height: 14px;
+  fill: #d4a017; color: #d4a017;
+}
+.star-icon.empty {
+  fill: none; stroke: rgba(255,255,255,0.25); stroke-width: 1.5;
+}
+html[data-theme="light"] .star-icon.empty { stroke: rgba(0,0,0,0.2); }
+.product-review-count {
+  font-size: 0.72rem; color: var(--text-dimmer); margin-left: 3px;
+}
+
+/* ── Infinite scroll ── */
+.mkt-sentinel { grid-column: 1 / -1; height: 1px; }
+.mkt-loader {
+  grid-column: 1 / -1; display: flex; align-items: center;
+  justify-content: center; padding: 2rem; gap: 10px;
+  color: var(--text-dim); font-size: 0.88rem; font-family: 'Space Grotesk', sans-serif;
+}
+.mkt-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--line); border-top-color: var(--text-dim);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.mkt-empty {
+  grid-column: 1 / -1; text-align: center; padding: 5rem 1rem; color: var(--text-dim);
+}
+.mkt-empty svg { width: 52px; height: 52px; margin-bottom: 1.2rem; opacity: 0.3; stroke: currentColor; fill: none; stroke-width: 1.4; stroke-linecap: round; }
+.mkt-empty h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 0.4rem; }
+.mkt-empty p { font-size: 0.88rem; }
+.mkt-end { grid-column: 1 / -1; text-align: center; padding: 1.5rem; color: var(--text-dimmer); font-size: 0.82rem; }
+</style>
+
+<div class="mkt-wrap">
+
+
+  <div class="mkt-search-row">
+    <form class="mkt-search-wrap" action="/marketplace" method="GET" id="mktSearchForm" style="flex:1;">
+      {{if .Category}}<input type="hidden" name="cat" value="{{.Category}}">{{end}}
+      <input
+        type="text" name="q" id="mktSearchInput"
+        class="mkt-search-input" placeholder="Search products…"
+        value="{{.Search}}" autocomplete="off">
+      <button type="submit" class="mkt-search-btn" aria-label="Search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </button>
+    </form>
+    {{if .Session}}
+    <a href="/purchases" class="mkt-purchases-btn" title="My Purchases" aria-label="My Purchases">
+      <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    </a>
+    {{end}}
+  </div>
+
+  <div class="mkt-cats">
+    <a href="/marketplace{{if .Search}}?q={{.Search}}{{end}}" class="mkt-cat-btn {{if eq .Category ""}}active{{end}}">All</a>
+    {{range .Categories}}
+    <a href="/marketplace?cat={{.}}{{if $.Search}}&q={{$.Search}}{{end}}" class="mkt-cat-btn {{if eq . $.Category}}active{{end}}">{{.}}</a>
+    {{end}}
+  </div>
+
+  {{if .IsAdmin}}
+  <div class="mkt-admin-bar">
+    <a href="{{.AdminPath}}/marketplace" class="mkt-add-btn">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Manage Products
+    </a>
+  </div>
+  {{end}}
+
+  <div class="product-grid" id="productGrid">
+    {{if not .Products}}
+    <div class="mkt-empty">
+      <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <h3>{{if .Search}}No products found{{else}}No products yet{{end}}</h3>
+      <p>{{if .Search}}Try a different search term{{else}}Check back soon for listings{{end}}</p>
+    </div>
+    {{else}}
+
+    {{range .Products}}
+    <a href="/products/{{.ID}}" class="product-card">
+      <div class="product-img-wrap">
+        {{if .ThumbnailPath}}
+        <img src="/static/{{trimStaticPrefix .ThumbnailPath}}" alt="{{.Title}}" class="product-img" loading="lazy">
+        {{else}}
+        <div class="product-img-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </div>
+        {{end}}
+        {{if .Category}}<span class="product-cat-badge">{{.Category}}</span>{{end}}
+      </div>
+      <div class="product-body">
+        <div class="product-title">{{.Title}}</div>
+        <div class="product-desc">{{truncate .Description 100}}</div>
+        <div class="product-footer">
+          <span class="product-price">${{formatPrice .Price}}</span>
+          <div class="product-stars">
+            {{$r := .AvgRating}}
+            {{range seq 5}}
+              {{if lt . (int $r)}}
+              <svg class="star-icon" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              {{else}}
+              <svg class="star-icon empty" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              {{end}}
+            {{end}}
+            <span class="product-review-count">({{.ReviewCount}})</span>
+          </div>
+        </div>
+      </div>
+    </a>
+    {{end}}
+
+    {{if ge (len .Products) 10}}
+    <div class="mkt-sentinel" id="mktSentinel" data-offset="{{len .Products}}" data-search="{{.Search}}" data-cat="{{.Category}}"></div>
+    {{end}}
+    {{end}}
+  </div>
+
+  <div id="mktLoader" class="mkt-loader" style="display:none;">
+    <div class="mkt-spinner"></div>
+    Loading more…
+  </div>
+</div>
+
+<script>
+(function(){
+  var grid = document.getElementById('productGrid');
+  var sentinel = document.getElementById('mktSentinel');
+  var loader = document.getElementById('mktLoader');
+  var loading = false;
+  var exhausted = false;
+
+  if (!sentinel) return;
+
+  function loadMore() {
+    if (loading || exhausted) return;
+    loading = true;
+    var offset = parseInt(sentinel.dataset.offset || '10', 10);
+    var search = sentinel.dataset.search || '';
+    var cat = sentinel.dataset.cat || '';
+    loader.style.display = 'flex';
+    sentinel.remove();
+    sentinel = null;
+
+    var url = '/api/marketplace/products?offset=' + offset;
+    if (search) url += '&q=' + encodeURIComponent(search);
+    if (cat) url += '&cat=' + encodeURIComponent(cat);
+
+    fetch(url, {credentials:'same-origin'})
+      .then(function(r){ return r.text(); })
+      .then(function(html){
+        loader.style.display = 'none';
+        loading = false;
+        if (!html || !html.trim()) { exhausted = true; appendEnd(); return; }
+        var tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        var newSentinel = tmp.querySelector('.mkt-sentinel');
+        if (newSentinel) newSentinel.remove();
+        Array.from(tmp.children).forEach(function(c){ grid.appendChild(c); });
+        if (newSentinel) {
+          sentinel = document.createElement('div');
+          sentinel.className = 'mkt-sentinel';
+          sentinel.dataset.offset = newSentinel.dataset.offset;
+          sentinel.dataset.search = newSentinel.dataset.search || '';
+          sentinel.dataset.cat = newSentinel.dataset.cat || '';
+          grid.appendChild(sentinel);
+          observe(sentinel);
+        } else {
+          exhausted = true; appendEnd();
+        }
+      })
+      .catch(function(){ loader.style.display = 'none'; loading = false; });
+  }
+
+  function appendEnd() {
+    var end = document.createElement('div');
+    end.className = 'mkt-end';
+    end.textContent = '— You\'ve reached the end —';
+    grid.appendChild(end);
+  }
+
+  function observe(el) {
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if (e.isIntersecting){ obs.unobserve(e.target); loadMore(); } });
+    }, {rootMargin:'200px'});
+    obs.observe(el);
+  }
+
+  observe(sentinel);
+})();
+</script>
+{{end}}

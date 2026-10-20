@@ -1,0 +1,433 @@
+{{define "admin-title"}}Marketplace{{end}}
+
+{{define "admin-content"}}
+<style>
+.mkt-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
+.mkt-topbar h1 { font-size:1.4rem; font-weight:600; margin:0; }
+.mkt-topbar p { color:var(--text-dim); font-size:0.88rem; margin:0.2rem 0 0; }
+
+/* Product table */
+.prod-thumb { width:44px; height:44px; border-radius:8px; object-fit:cover; background:var(--surface2); display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
+.prod-thumb img { width:100%; height:100%; object-fit:cover; }
+.prod-thumb svg { width:20px; height:20px; stroke:var(--text-dimmer); fill:none; stroke-width:1.4; }
+.prod-info { display:flex; align-items:center; gap:10px; }
+.prod-name { font-weight:600; font-size:0.9rem; }
+.prod-cat { font-size:0.75rem; color:var(--text-dim); margin-top:1px; }
+
+/* Modal */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; padding:1rem; }
+.modal-overlay.open { display:flex; }
+.modal-box { background:#0d0d0f; border:1px solid rgba(255,255,255,0.1); border-radius:16px; width:100%; max-width:700px; max-height:90vh; overflow-y:auto; display:flex; flex-direction:column; }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid var(--line); position:sticky; top:0; background:#0d0d0f; z-index:1; }
+.modal-header h2 { font-size:1.1rem; font-weight:700; margin:0; }
+.modal-close { background:none; border:none; color:var(--text-dim); cursor:pointer; padding:4px; display:flex; align-items:center; transition:color 0.15s; }
+.modal-close:hover { color:var(--text); }
+.modal-close svg { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; }
+.modal-body { padding:1.5rem; display:flex; flex-direction:column; gap:1.1rem; }
+.modal-footer { padding:1rem 1.5rem; border-top:1px solid var(--line); display:flex; gap:0.75rem; justify-content:flex-end; position:sticky; bottom:0; background:#0d0d0f; }
+
+.fg { display:flex; flex-direction:column; gap:0.35rem; }
+.fg label { font-size:0.78rem; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.06em; }
+.fg input, .fg textarea, .fg select {
+  background:var(--surface2); border:1px solid var(--line); border-radius:8px;
+  padding:0.6rem 0.85rem; color:var(--text); font-family:inherit; font-size:0.9rem;
+  outline:none; transition:border-color 0.15s; width:100%;
+}
+.fg textarea { resize:vertical; min-height:80px; }
+.fg input:focus, .fg textarea:focus, .fg select:focus { border-color:rgba(255,255,255,0.3); }
+.fg select option { background:#0d0d0f; }
+.fg-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+@media(max-width:520px){ .fg-row { grid-template-columns:1fr; } }
+
+/* Image section */
+.img-section { border:1px solid var(--line); border-radius:10px; padding:1rem; }
+.img-section-title { font-size:0.78rem; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.85rem; }
+.img-grid { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:0.85rem; min-height:0; }
+.img-item { position:relative; width:80px; height:80px; border-radius:8px; overflow:hidden; border:2px solid var(--line); flex-shrink:0; cursor:pointer; }
+.img-item img { width:100%; height:100%; object-fit:cover; }
+.img-item.is-thumb { border-color:#a259ff; }
+.img-item .thumb-badge { position:absolute; bottom:0; left:0; right:0; background:rgba(162,89,255,0.85); color:#fff; font-size:0.6rem; font-weight:700; text-align:center; padding:2px; letter-spacing:0.04em; }
+.img-del-btn { position:absolute; top:3px; right:3px; background:rgba(0,0,0,0.7); border:none; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; }
+.img-del-btn svg { width:10px; height:10px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; }
+.img-upload-input { display:none; }
+.img-upload-label { display:inline-flex; align-items:center; gap:6px; background:var(--surface2); border:1px dashed var(--line); border-radius:8px; padding:0.5rem 1rem; cursor:pointer; font-size:0.85rem; color:var(--text-dim); transition:border-color 0.15s, color 0.15s; }
+.img-upload-label:hover { border-color:rgba(255,255,255,0.3); color:var(--text); }
+.img-upload-label svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; }
+.img-hint { font-size:0.74rem; color:var(--text-dimmer); margin-top:0.4rem; }
+
+/* After buy section */
+.after-buy-section { background:rgba(162,89,255,0.05); border:1px solid rgba(162,89,255,0.15); border-radius:10px; padding:1rem; }
+.after-buy-title { font-size:0.78rem; font-weight:700; color:#a259ff; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.85rem; display:flex; align-items:center; gap:6px; }
+.after-buy-title svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; }
+
+/* Empty state */
+.mkt-empty-state { text-align:center; padding:4rem 1rem; color:var(--text-dim); }
+.mkt-empty-state svg { width:48px; height:48px; margin-bottom:1rem; opacity:0.3; stroke:currentColor; fill:none; stroke-width:1.4; stroke-linecap:round; }
+.mkt-empty-state h3 { font-size:1rem; font-weight:600; color:var(--text); margin-bottom:0.3rem; }
+</style>
+
+{{if .Success}}<div class="alert alert-success" style="margin-bottom:1rem;">{{.Success}}</div>{{end}}
+{{if .Error}}<div class="alert alert-error" style="margin-bottom:1rem;">{{.Error}}</div>{{end}}
+
+<div class="mkt-topbar">
+  <div>
+    <h1>Marketplace</h1>
+    <p>{{len .Products}} product{{if ne (len .Products) 1}}s{{end}} listed</p>
+  </div>
+  <button class="btn btn-primary" onclick="openAddModal()">
+    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;"><path d="M12 5v14M5 12h14"/></svg>
+    Add Product
+  </button>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+  {{if .Products}}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Category</th>
+          <th>After Buy</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Products}}
+        <tr>
+          <td>
+            <div class="prod-info">
+              <div class="prod-thumb">
+                {{if .ThumbnailPath}}
+                <img src="/static/{{trimStaticPrefix .ThumbnailPath}}" alt="">
+                {{else}}
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                {{end}}
+              </div>
+              <div>
+                <div class="prod-name">{{.Title}}</div>
+                <div class="prod-cat">{{if .Category}}{{.Category}}{{else}}Uncategorized{{end}}</div>
+              </div>
+            </div>
+          </td>
+          <td>${{formatPrice .Price}}</td>
+          <td><span class="badge badge-dim">{{if .Category}}{{.Category}}{{else}}—{{end}}</span></td>
+          <td style="font-size:0.8rem;color:var(--text-dim);">
+            {{if .AfterBuyButtonName}}{{.AfterBuyButtonName}}{{else}}—{{end}}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:flex;gap:6px;justify-content:flex-end;">
+              <button class="btn btn-ghost btn-sm" onclick="openEditModal({{.ID}}, this)"
+                data-title="{{.Title}}"
+                data-description="{{.Description}}"
+                data-price="{{formatPrice .Price}}"
+                data-category="{{.Category}}"
+                data-after-buy-link="{{.AfterBuyLink}}"
+                data-after-buy-button-name="{{.AfterBuyButtonName}}"
+                data-after-buy-comment="{{.AfterBuyComment}}">
+                Edit
+              </button>
+              <form method="POST" action="{{$.AdminPath}}/marketplace/{{.ID}}/delete" onsubmit="return confirm('Delete this product?');" style="display:inline;">
+                <input type="hidden" name="_csrf" value="{{$.CSRFToken}}">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <div class="mkt-empty-state">
+    <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <h3>No products yet</h3>
+    <p>Click "Add Product" to create your first listing.</p>
+  </div>
+  {{end}}
+</div>
+
+<!-- ── Modal ── -->
+<div class="modal-overlay" id="mktModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="modalHeading">Add Product</h2>
+      <button class="modal-close" onclick="closeModal()" type="button">
+        <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="mktForm" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <div class="modal-body">
+
+        <div class="fg">
+          <label for="mTitle">Title *</label>
+          <input type="text" id="mTitle" name="title" placeholder="Product name" required maxlength="200">
+        </div>
+
+        <div class="fg">
+          <label for="mDesc">Description</label>
+          <textarea id="mDesc" name="description" placeholder="Describe the product…" rows="3"></textarea>
+        </div>
+
+        <div class="fg-row">
+          <div class="fg">
+            <label for="mPrice">Price (USD)</label>
+            <input type="number" id="mPrice" name="price" placeholder="0.00" min="0" step="0.01" value="0.00">
+          </div>
+          <div class="fg">
+            <label for="mCat">Category</label>
+            <select id="mCat" name="category">
+              <option value="">— Select —</option>
+              {{range .Categories}}
+              <option value="{{.}}">{{.}}</option>
+              {{end}}
+            </select>
+          </div>
+        </div>
+
+        <!-- Images -->
+        <div class="img-section">
+          <div class="img-section-title">Images</div>
+          <div class="img-grid" id="imgGrid"></div>
+          <label class="img-upload-label" for="imgFileInput">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Images
+          </label>
+          <input type="file" id="imgFileInput" name="images" class="img-upload-input" multiple accept="image/jpeg,image/png,image/webp,image/gif" onchange="onImagesSelected(this)">
+          <input type="hidden" name="thumbnail_index" id="thumbnailIndexInput" value="0">
+          <div class="img-hint">Click an image to set as thumbnail. First image is thumbnail by default. Max 10 MB each.</div>
+        </div>
+
+        <!-- After Buy -->
+        <div class="after-buy-section">
+          <div class="after-buy-title">
+            <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+            After Buy Settings
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.85rem;">
+            <div class="fg">
+              <label for="mAbLink">After Buy Link (URL)</label>
+              <input type="url" id="mAbLink" name="after_buy_link" placeholder="https://example.com/download">
+            </div>
+            <div class="fg-row">
+              <div class="fg">
+                <label for="mAbBtn">Button Name</label>
+                <input type="text" id="mAbBtn" name="after_buy_button_name" placeholder="Download" maxlength="100" value="Download">
+              </div>
+            </div>
+            <div class="fg">
+              <label for="mAbComment">After Buy Message</label>
+              <textarea id="mAbComment" name="after_buy_comment" placeholder="Thank you for your purchase! Click below to download…" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="mktSubmitBtn">Add Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var adminPath = '{{.AdminPath}}';
+var modalMode = 'add';
+var editProductId = null;
+
+// Existing images in edit mode (fetched from server)
+var existingImages = [];
+// New files staged for upload
+var newFiles = [];
+// Which index among ALL images (existing + new) is thumbnail
+var thumbnailIdx = 0;
+
+function openAddModal() {
+  modalMode = 'add';
+  editProductId = null;
+  existingImages = [];
+  newFiles = [];
+  thumbnailIdx = 0;
+  document.getElementById('modalHeading').textContent = 'Add Product';
+  document.getElementById('mktSubmitBtn').textContent = 'Add Product';
+  document.getElementById('mktForm').action = adminPath + '/marketplace/add';
+  clearForm();
+  renderImgGrid();
+  openModal();
+}
+
+function openEditModal(id, btn) {
+  modalMode = 'edit';
+  editProductId = id;
+  existingImages = [];
+  newFiles = [];
+  thumbnailIdx = 0;
+  document.getElementById('modalHeading').textContent = 'Edit Product';
+  document.getElementById('mktSubmitBtn').textContent = 'Save Changes';
+  document.getElementById('mktForm').action = adminPath + '/marketplace/' + id + '/edit';
+
+  // Populate text fields
+  document.getElementById('mTitle').value = btn.dataset.title || '';
+  document.getElementById('mDesc').value = btn.dataset.description || '';
+  document.getElementById('mPrice').value = btn.dataset.price || '0.00';
+  document.getElementById('mAbLink').value = btn.dataset.afterBuyLink || '';
+  document.getElementById('mAbBtn').value = btn.dataset.afterBuyButtonName || 'Download';
+  document.getElementById('mAbComment').value = btn.dataset.afterBuyComment || '';
+
+  var catSel = document.getElementById('mCat');
+  for (var i = 0; i < catSel.options.length; i++) {
+    catSel.options[i].selected = (catSel.options[i].value === btn.dataset.category);
+  }
+
+  renderImgGrid();
+  openModal();
+
+  // Load existing images
+  fetch('/api/admin/mkt/images?id=' + id, {credentials:'same-origin'})
+    .then(function(r){ return r.json(); })
+    .then(function(imgs){
+      existingImages = imgs || [];
+      // find thumbnail index
+      for (var i = 0; i < existingImages.length; i++) {
+        if (existingImages[i].is_thumbnail) { thumbnailIdx = i; break; }
+      }
+      renderImgGrid();
+    })
+    .catch(function(){});
+}
+
+function clearForm() {
+  document.getElementById('mTitle').value = '';
+  document.getElementById('mDesc').value = '';
+  document.getElementById('mPrice').value = '0.00';
+  document.getElementById('mCat').selectedIndex = 0;
+  document.getElementById('mAbLink').value = '';
+  document.getElementById('mAbBtn').value = 'Download';
+  document.getElementById('mAbComment').value = '';
+  document.getElementById('imgFileInput').value = '';
+}
+
+function openModal() {
+  document.getElementById('mktModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('mktModal').classList.remove('open');
+  document.body.style.overflow = '';
+  newFiles = [];
+  existingImages = [];
+  document.getElementById('imgFileInput').value = '';
+}
+
+document.getElementById('mktModal').addEventListener('click', function(e){
+  if (e.target === this) closeModal();
+});
+
+function onImagesSelected(input) {
+  var chosen = Array.from(input.files);
+  newFiles = chosen;
+  renderImgGrid();
+}
+
+function renderImgGrid() {
+  var grid = document.getElementById('imgGrid');
+  grid.innerHTML = '';
+
+  var totalExisting = existingImages.length;
+
+  // Existing images
+  existingImages.forEach(function(img, idx) {
+    var div = document.createElement('div');
+    div.className = 'img-item' + (idx === thumbnailIdx ? ' is-thumb' : '');
+    div.title = 'Click to set as thumbnail';
+    div.innerHTML = '<img src="' + img.url + '" alt="">'
+      + (idx === thumbnailIdx ? '<div class="thumb-badge">THUMB</div>' : '')
+      + '<button type="button" class="img-del-btn" title="Delete image"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+    div.querySelector('.img-del-btn').addEventListener('click', function(e){
+      e.stopPropagation();
+      deleteExistingImage(img.id, idx);
+    });
+    div.addEventListener('click', function(){ setThumbnailExisting(idx); });
+    grid.appendChild(div);
+  });
+
+  // New (staged) files
+  newFiles.forEach(function(file, i) {
+    var globalIdx = totalExisting + i;
+    var div = document.createElement('div');
+    div.className = 'img-item' + (globalIdx === thumbnailIdx ? ' is-thumb' : '');
+    div.title = 'Click to set as thumbnail';
+    var url = URL.createObjectURL(file);
+    div.innerHTML = '<img src="' + url + '" alt="">'
+      + (globalIdx === thumbnailIdx ? '<div class="thumb-badge">THUMB</div>' : '')
+      + '<button type="button" class="img-del-btn" title="Remove"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+    div.querySelector('.img-del-btn').addEventListener('click', function(e){
+      e.stopPropagation();
+      newFiles.splice(i, 1);
+      rebuildFileInput();
+      if (thumbnailIdx === globalIdx) thumbnailIdx = 0;
+      renderImgGrid();
+    });
+    div.addEventListener('click', function(){ setThumbnailNew(globalIdx); });
+    grid.appendChild(div);
+  });
+
+  document.getElementById('thumbnailIndexInput').value = thumbnailIdx;
+}
+
+function setThumbnailExisting(idx) {
+  if (editProductId && existingImages[idx]) {
+    var imgId = existingImages[idx].id;
+    fetch(adminPath + '/marketplace/' + editProductId + '/set-thumbnail/' + imgId, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: '_csrf=' + encodeURIComponent(document.querySelector('[name="_csrf"]').value)
+    }).then(function(){
+      existingImages.forEach(function(im){ im.is_thumbnail = false; });
+      existingImages[idx].is_thumbnail = true;
+      thumbnailIdx = idx;
+      renderImgGrid();
+    }).catch(function(){});
+  } else {
+    thumbnailIdx = idx;
+    renderImgGrid();
+  }
+}
+
+function setThumbnailNew(globalIdx) {
+  thumbnailIdx = globalIdx;
+  document.getElementById('thumbnailIndexInput').value = thumbnailIdx;
+  renderImgGrid();
+}
+
+function deleteExistingImage(imgId, idx) {
+  if (!editProductId) return;
+  if (!confirm('Delete this image?')) return;
+  fetch(adminPath + '/marketplace/' + editProductId + '/image-delete/' + imgId, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: '_csrf=' + encodeURIComponent(document.querySelector('[name="_csrf"]').value)
+  }).then(function(){
+    existingImages.splice(idx, 1);
+    if (thumbnailIdx >= existingImages.length + newFiles.length) thumbnailIdx = 0;
+    renderImgGrid();
+  }).catch(function(){});
+}
+
+function rebuildFileInput() {
+  // Rebuild the DataTransfer to remove files from file input
+  try {
+    var dt = new DataTransfer();
+    newFiles.forEach(function(f){ dt.items.add(f); });
+    document.getElementById('imgFileInput').files = dt.files;
+  } catch(e) {}
+}
+</script>
+{{end}}

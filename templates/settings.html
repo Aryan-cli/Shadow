@@ -1,0 +1,1128 @@
+{{define "settings"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — Shadow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>!function(){var s=localStorage.getItem('shadow-theme');if(s==='light')document.documentElement.setAttribute('data-theme','light');}();</script>
+<style>
+:root {
+  --bg:#050506; --surface:rgba(255,255,255,0.03);
+  --surface-hover:rgba(255,255,255,0.055); --surface-card:rgba(255,255,255,0.038);
+  --text:#F2F2F0; --text-dim:#8A8A8F; --text-dimmer:#4A4A50;
+  --line:rgba(255,255,255,0.09); --line-inner:rgba(255,255,255,0.06);
+  --nav-border:rgba(255,255,255,0.1); --danger:#C9696B;
+  --sidebar-w:240px; --topbar-h:56px;
+}
+html[data-theme="light"] {
+  --bg:#F4F3F1; --surface:rgba(0,0,0,0.025);
+  --surface-hover:rgba(0,0,0,0.045); --surface-card:rgba(0,0,0,0.032);
+  --text:#15151A; --text-dim:#6B6B72; --text-dimmer:#A6A5AC;
+  --line:rgba(0,0,0,0.1); --line-inner:rgba(0,0,0,0.06);
+  --nav-border:rgba(0,0,0,0.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;
+  line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh;
+  transition:background .35s ease,color .35s ease;
+}
+a{color:inherit;text-decoration:none;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 50% 0%,rgba(255,255,255,0.04),transparent 50%);pointer-events:none;z-index:0;}
+:focus-visible{outline:1px solid rgba(255,255,255,0.4);outline-offset:3px;}
+
+.nav-wrap{position:fixed;top:0;left:0;right:0;z-index:50;height:var(--topbar-h);display:flex;align-items:center;padding:0 20px;background:rgba(5,5,6,0.75);border-bottom:1px solid var(--line);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);transition:background .35s ease;}
+html[data-theme="light"] .nav-wrap{background:rgba(244,243,241,0.8);}
+.nav-inner{width:100%;display:flex;align-items:center;gap:16px;}
+.logo{display:flex;align-items:center;gap:9px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.95rem;letter-spacing:-.01em;white-space:nowrap;flex-shrink:0;}
+.theme-toggle{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .35s ease,border-color .2s ease;flex-shrink:0;padding:0;}
+html[data-theme="light"] .theme-toggle{background:rgba(0,0,0,0.04);}
+.theme-toggle:hover{border-color:var(--text-dimmer);}
+.theme-toggle svg{width:14px;height:14px;stroke:var(--text);fill:none;stroke-width:1.6;pointer-events:none;}
+.theme-toggle .icon-moon{display:block;} .theme-toggle .icon-sun{display:none;}
+html[data-theme="light"] .theme-toggle .icon-moon{display:none;}
+html[data-theme="light"] .theme-toggle .icon-sun{display:block;}
+.nav-sep{width:1px;height:20px;background:var(--line);flex-shrink:0;}
+.nav-breadcrumb{display:flex;align-items:center;gap:8px;font-size:.83rem;color:var(--text-dim);font-family:'Space Grotesk',sans-serif;}
+.nav-breadcrumb span{color:var(--text-dimmer);} .nav-breadcrumb strong{color:var(--text);font-weight:500;}
+.nav-spacer{flex:1;}
+.user-pill{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 5px;border-radius:100px;border:1px solid var(--line);background:transparent;color:var(--text);font-family:inherit;font-size:.83rem;font-weight:500;cursor:default;overflow:hidden;}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#6b6b76,#2a2a30);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:.68rem;font-weight:600;color:#fff;flex-shrink:0;overflow:hidden;}
+.user-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+
+.card-group{background:var(--surface-card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:20px;}
+.card-group-label{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text-dimmer);letter-spacing:.08em;text-transform:uppercase;padding:14px 20px 0;margin-bottom:4px;}
+.card-row{display:flex;align-items:center;gap:16px;padding:15px 20px;border-bottom:1px solid var(--line-inner);}
+.card-row:last-child{border-bottom:none;}
+.card-row-icon{width:34px;height:34px;border-radius:8px;background:var(--surface-hover);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.card-row-icon svg{width:16px;height:16px;stroke:var(--text-dim);fill:none;stroke-width:1.6;}
+.card-row-body{flex:1;min-width:0;}
+.card-row-body strong{display:block;font-size:.9rem;font-weight:500;}
+.card-row-body span{font-size:.8rem;color:var(--text-dim);word-break:break-word;}
+.card-row-action{flex-shrink:0;display:flex;align-items:center;gap:10px;}
+
+.btn{font-family:'Inter',sans-serif;font-size:.84rem;font-weight:500;padding:8px 18px;border-radius:100px;cursor:pointer;transition:all .2s ease;border:1px solid transparent;display:inline-flex;align-items:center;gap:6px;}
+.btn-ghost{background:transparent;color:var(--text);border-color:var(--line);}
+.btn-ghost:hover{border-color:var(--text-dimmer);}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text);}
+.btn-primary:hover{opacity:.88;}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-danger{background:transparent;color:var(--danger);border-color:rgba(201,105,107,.3);}
+.btn-danger:hover{background:rgba(201,105,107,.1);}
+.btn-sm{padding:5px 13px;font-size:.78rem;}
+
+.toggle-wrap{position:relative;width:44px;height:26px;flex-shrink:0;}
+.toggle-wrap input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:var(--surface-hover);border:1px solid var(--line);border-radius:100px;cursor:pointer;transition:background .2s ease,border-color .2s ease;}
+.toggle-track::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--text-dimmer);transition:transform .2s ease,background .2s ease;}
+.toggle-wrap input:checked + .toggle-track{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);}
+.toggle-wrap input:checked + .toggle-track::after{transform:translateX(18px);background:var(--text);}
+html[data-theme="light"] .toggle-wrap input:checked + .toggle-track{background:rgba(0,0,0,.12);border-color:rgba(0,0,0,.2);}
+
+.field-label{font-size:.76rem;font-family:'JetBrains Mono',monospace;color:var(--text-dimmer);letter-spacing:.06em;margin-bottom:8px;}
+.field-input{width:100%;background:var(--surface-card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;color:var(--text);font-family:'Inter',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s ease;resize:none;}
+.field-input:focus{border-color:var(--text-dimmer);}
+.field-input::placeholder{color:var(--text-dimmer);}
+.field-hint{font-size:.73rem;color:var(--text-dimmer);margin-top:6px;}
+
+.big-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#6b6b76,#2a2a30);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:600;color:#fff;flex-shrink:0;position:relative;overflow:hidden;}
+.big-avatar-status{position:absolute;bottom:1px;right:1px;width:14px;height:14px;border-radius:50%;background:#3FFF8D;border:2px solid var(--bg);}
+.big-avatar-info strong{display:block;font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:600;}
+.big-avatar-info span{font-size:.8rem;color:var(--text-dim);}
+
+.session-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line-inner);}
+.session-row:last-child{border-bottom:none;}
+.session-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dimmer);flex-shrink:0;}
+.session-dot.on{background:#3FFF8D;}
+.session-info{flex:1;}
+.session-info strong{display:block;font-size:.86rem;font-weight:500;}
+.session-info span{font-size:.75rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;}
+
+.notif-row{display:flex;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line-inner);}
+.notif-row:last-child{border-bottom:none;}
+.notif-icon{width:32px;height:32px;border-radius:50%;background:var(--surface-hover);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.notif-icon svg{width:14px;height:14px;stroke:var(--text-dim);fill:none;stroke-width:1.6;}
+.notif-body strong{display:block;font-size:.86rem;font-weight:500;}
+.notif-body span{font-size:.78rem;color:var(--text-dim);}
+.notif-time{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text-dimmer);margin-left:auto;flex-shrink:0;padding-top:3px;}
+
+.payment-blank{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;text-align:center;gap:16px;}
+.payment-blank svg{width:40px;height:40px;stroke:var(--text-dimmer);fill:none;stroke-width:1.2;}
+.payment-blank h3{font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:600;}
+.payment-blank p{font-size:.84rem;color:var(--text-dim);max-width:260px;}
+.danger-zone{border-color:rgba(201,105,107,.25);}
+
+/* ── Payment rows ── */
+.pay-row{display:flex;align-items:center;gap:14px;padding:15px 18px;background:var(--surface-card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;transition:border-color .15s ease;}
+.pay-row:last-child{margin-bottom:0;}
+.pay-row[data-ispending="1"]{border-color:rgba(255,200,50,.18);background:rgba(255,200,50,.02);}
+.pay-row-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0;}
+.pay-coin-badge{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;flex-shrink:0;}
+.pay-btc{background:rgba(247,147,26,.12);color:#F7931A;border:1px solid rgba(247,147,26,.25);}
+.pay-xmr{background:rgba(255,102,0,.12);color:#FF6600;border:1px solid rgba(255,102,0,.25);}
+.pay-row-info{flex:1;min-width:0;}
+.pay-product{font-size:.88rem;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px;}
+.pay-meta{font-size:.73rem;color:var(--text-dimmer);display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+.pay-id{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text-dimmer);}
+.pay-timer{font-family:'JetBrains Mono',monospace;color:#F7C532;font-size:.72rem;}
+.pay-row-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.pay-amount{text-align:right;}
+.pay-crypto{display:block;font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:500;color:var(--text);}
+.pay-usd{font-size:.73rem;color:var(--text-dimmer);}
+.pay-status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:.72rem;font-weight:600;white-space:nowrap;text-decoration:none;}
+.pay-confirmed{background:rgba(63,255,141,.1);color:#3FFF8D;border:1px solid rgba(63,255,141,.25);}
+.pay-pending{background:rgba(247,197,50,.1);color:#F7C532;border:1px solid rgba(247,197,50,.3);}
+.pay-notpaid{background:rgba(201,105,107,.1);color:#E08486;border:1px solid rgba(201,105,107,.25);}
+.pay-cancelled{background:var(--surface-hover);color:var(--text-dimmer);border:1px solid var(--line);}
+@media(max-width:540px){.pay-row{flex-wrap:wrap;}.pay-row-right{align-items:flex-start;}}
+
+.page-wrap{display:flex;padding-top:var(--topbar-h);min-height:100vh;position:relative;z-index:1;}
+.sidebar{width:var(--sidebar-w);flex-shrink:0;position:sticky;top:var(--topbar-h);height:calc(100vh - var(--topbar-h));overflow-y:auto;border-right:1px solid var(--line);padding:24px 12px;display:flex;flex-direction:column;gap:4px;}
+.sidebar-label{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text-dimmer);letter-spacing:.1em;text-transform:uppercase;padding:8px 12px 6px;margin-top:8px;}
+.sidebar-label:first-child{margin-top:0;}
+.sidebar-btn{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;font-size:.88rem;color:var(--text-dim);cursor:pointer;transition:background .15s ease,color .15s ease;border:none;background:transparent;width:100%;text-align:left;font-family:inherit;}
+.sidebar-btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.6;flex-shrink:0;}
+.sidebar-btn:hover{background:var(--surface-hover);color:var(--text);}
+.sidebar-btn.active{background:rgba(255,255,255,.08);color:var(--text);font-weight:500;}
+html[data-theme="light"] .sidebar-btn.active{background:rgba(0,0,0,.07);}
+
+.desktop-main{flex:1;min-width:0;padding:40px 48px;max-width:780px;}
+.section-header{margin-bottom:28px;}
+.section-header h2{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-.02em;margin-bottom:6px;}
+.section-header p{font-size:.86rem;color:var(--text-dim);}
+
+.mobile-wrap{width:100%;padding-top:var(--topbar-h);position:relative;z-index:1;}
+.mobile-home{padding:20px 16px 40px;}
+.mobile-profile{display:flex;align-items:center;gap:16px;padding:20px 0 24px;}
+.mobile-nav-btn{display:flex;align-items:center;gap:16px;padding:17px 18px;background:transparent;border:none;border-bottom:1px solid var(--line-inner);color:var(--text);font-family:inherit;width:100%;text-align:left;cursor:pointer;transition:background .15s ease;}
+.mobile-nav-btn:last-child{border-bottom:none;}
+.mobile-nav-btn:hover{background:var(--surface-hover);}
+.mobile-nav-icon{width:42px;height:42px;border-radius:11px;background:var(--surface-hover);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mobile-nav-icon svg{width:19px;height:19px;stroke:var(--text-dim);fill:none;stroke-width:1.6;}
+.mobile-nav-text{flex:1;}
+.mobile-nav-text strong{display:block;font-size:.95rem;font-weight:500;}
+.mobile-nav-text span{font-size:.8rem;color:var(--text-dim);}
+.mobile-nav-arrow{color:var(--text-dimmer);flex-shrink:0;}
+.mobile-nav-arrow svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;}
+.mobile-detail{display:flex;flex-direction:column;min-height:calc(100vh - var(--topbar-h));}
+.mobile-back-bar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--surface-card);position:sticky;top:var(--topbar-h);z-index:10;cursor:pointer;border-left:none;border-right:none;border-top:none;color:var(--text);font-family:inherit;width:100%;text-align:left;}
+.mobile-back-bar svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;flex-shrink:0;}
+.mobile-back-bar span{font-size:.84rem;color:var(--text-dim);}
+.mobile-back-bar strong{font-size:.92rem;font-weight:500;}
+.mobile-detail-body{padding:20px 16px 40px;}
+
+.desktop-only{display:flex;} .mobile-only{display:none;}
+@media(max-width:760px){.desktop-only{display:none!important;}.mobile-only{display:block!important;}.mobile-wrap{display:block;}}
+@media(min-width:761px){.mobile-only{display:none!important;}.desktop-only{display:flex;}}
+@media(max-width:900px) and (min-width:761px){.desktop-main{padding:32px 28px;}.sidebar{width:200px;}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+
+/* ── SPINNER ── */
+.upload-spinner{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);align-items:center;justify-content:center;}
+.upload-spinner.on{display:flex;}
+.spinner-box{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:28px 36px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;}
+.spinner-ring{width:36px;height:36px;border:2px solid var(--line);border-top-color:var(--text);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spinner-text{font-size:.84rem;color:var(--text-dim);}
+
+/* ── TOAST ── */
+.s-toast{position:fixed;bottom:24px;right:24px;z-index:400;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:13px 18px;box-shadow:0 16px 40px rgba(0,0,0,.5);display:flex;align-items:center;gap:9px;font-size:.85rem;pointer-events:none;transform:translateY(70px);opacity:0;transition:transform .3s ease,opacity .3s ease;}
+.s-toast.show{transform:translateY(0);opacity:1;}
+.s-toast.success{border-color:rgba(63,255,141,.3);color:#3FFF8D;}
+.s-toast.error{border-color:rgba(201,105,107,.3);color:#E08486;}
+.s-toast svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<div class="upload-spinner" id="spinner">
+  <div class="spinner-box">
+    <div class="spinner-ring"></div>
+    <span class="spinner-text">Uploading…</span>
+  </div>
+</div>
+
+<div class="s-toast" id="toast">
+  <svg id="toastIcon" viewBox="0 0 24 24"></svg>
+  <span id="toastMsg"></span>
+</div>
+
+<input type="file" id="avatarFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
+<input type="file" id="bannerFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
+
+<div class="nav-wrap">
+  <div class="nav-inner">
+    <div class="logo">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" type="button">
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="icon-sun"  viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+      </button>
+      <a href="/">Shadow</a>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-breadcrumb"><a href="/">Home</a><span>›</span><strong>Settings</strong></div>
+    <div class="nav-spacer"></div>
+    <div class="user-pill">
+      <div class="user-avatar" id="navAvatar">
+        {{if .AvatarURL}}<img src="{{.AvatarURL}}" alt="">{{else}}{{.Initials}}{{end}}
+      </div>
+      {{.Session.Username}}
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ DESKTOP ═══ -->
+<div class="page-wrap desktop-only">
+
+  <aside class="sidebar">
+    <span class="sidebar-label">Account</span>
+    <button class="sidebar-btn active" onclick="deskSwitch('account',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>Account
+    </button>
+    <button class="sidebar-btn" onclick="deskSwitch('security',this)">
+      <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Password &amp; Security
+    </button>
+    <span class="sidebar-label">Preferences</span>
+    <button class="sidebar-btn" onclick="deskSwitch('notifications',this)">
+      <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications
+    </button>
+    <span class="sidebar-label">Billing</span>
+    <button class="sidebar-btn" onclick="deskSwitch('payments',this)">
+      <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Payments
+    </button>
+    <div style="flex:1"></div>
+    <form method="POST" action="/logout" style="padding:0 0 8px">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <button type="submit" class="sidebar-btn" style="color:#C9696B">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Logout
+      </button>
+    </form>
+  </aside>
+
+  <main class="desktop-main">
+
+    <!-- ACCOUNT -->
+    <div id="d-account">
+      <div class="section-header">
+        <h2>Account</h2>
+        <p>Your profile information and public presence on Shadow.</p>
+      </div>
+
+      <div class="card-group">
+        <!-- Avatar row -->
+        <div style="display:flex;align-items:center;gap:18px;padding:20px;border-bottom:1px solid var(--line-inner);">
+          <div class="big-avatar" id="bigAvatar">
+            {{if .AvatarURL}}
+            <img id="bigAvatarImg" src="{{.AvatarURL}}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">
+            {{else}}
+            <span id="bigAvatarInitials">{{.Initials}}</span>
+            <img id="bigAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;">
+            {{end}}
+            <div class="big-avatar-status"></div>
+          </div>
+          <div class="big-avatar-info">
+            <strong id="bigAvatarName">{{if .User.DisplayName}}{{.User.DisplayName}}{{else}}{{.Session.Username}}{{end}}</strong>
+            <span>Member</span>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('avatarFileInput').click()">Change avatar</button>
+            <button class="btn btn-ghost btn-sm" id="removeAvatarBtn" onclick="removeAvatar()" style="{{if not .AvatarURL}}display:none;{{end}}color:var(--danger);border-color:rgba(201,105,107,.3);">Remove</button>
+          </div>
+        </div>
+
+        <!-- Banner row -->
+        <div style="border-bottom:1px solid var(--line-inner);">
+          <div style="position:relative;height:160px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 70%,#1a1a2e 100%);overflow:hidden;" id="settingsBannerWrap">
+            {{if .BannerURL}}<img id="settingsBannerImg" src="{{.BannerURL}}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">{{else}}<img id="settingsBannerImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">{{end}}
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;">
+            <span style="font-size:.84rem;color:var(--text-dim);">Profile banner</span>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bannerFileInput').click()">Change banner</button>
+          </div>
+        </div>
+
+        <!-- Username (immutable) -->
+        <div class="card-row">
+          <div class="card-row-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg></div>
+          <div class="card-row-body">
+            <strong>Username</strong>
+            <span>{{.Session.Username}}</span>
+          </div>
+          <div class="card-row-action">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text-dimmer)">cannot change</span>
+          </div>
+        </div>
+
+        <!-- Display name -->
+        <div class="card-row">
+          <div class="card-row-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><path d="M4 7h16M8 3h8"/></svg></div>
+          <div class="card-row-body">
+            <strong>Display name</strong>
+            <span data-val="display-name">{{if .User.DisplayName}}{{.User.DisplayName}}{{else}}{{.Session.Username}}{{end}}</span>
+          </div>
+          <div class="card-row-action">
+            <button class="btn btn-ghost btn-sm" onclick="openModal('display-name')">Edit</button>
+          </div>
+        </div>
+
+        <!-- Bio -->
+        <div class="card-row">
+          <div class="card-row-icon"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+          <div class="card-row-body">
+            <strong>Bio</strong>
+            {{if .User.Bio}}
+            <span data-val="bio">{{.User.Bio}}</span>
+            {{else}}
+            <span data-val="bio" style="font-style:italic;color:var(--text-dimmer)">Not set</span>
+            {{end}}
+          </div>
+          <div class="card-row-action">
+            <button class="btn btn-ghost btn-sm" onclick="openModal('bio')">Edit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="card-group">
+        <div class="card-group-label">Contact (optional)</div>
+        <div class="card-row">
+          <div class="card-row-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+          <div class="card-row-body">
+            <strong>Email address</strong>
+            {{if .User.Email}}
+            <span data-val="email">{{.User.Email}}</span>
+            {{else}}
+            <span data-val="email" style="font-style:italic;color:var(--text-dimmer)">not set — used for notifications only</span>
+            {{end}}
+          </div>
+          <div class="card-row-action">
+            <button class="btn btn-ghost btn-sm" onclick="openModal('email')">{{if .User.Email}}Edit{{else}}Add{{end}}</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account info -->
+      <div class="card-group">
+        <div class="card-group-label">Account info</div>
+        <div class="card-row">
+          <div class="card-row-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+          <div class="card-row-body">
+            <strong>Member since</strong>
+            <span>{{.User.CreatedAt.Format "January 2, 2006"}}</span>
+          </div>
+        </div>
+        <div class="card-row">
+          <div class="card-row-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+          <div class="card-row-body">
+            <strong>Last active</strong>
+            <span>{{.LastActivity}}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy -->
+      <div class="card-group">
+        <div class="card-group-label">Privacy</div>
+        <div class="card-row">
+          <div class="card-row-icon"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="card-row-body">
+            <strong>Online status &amp; last login</strong>
+            <span>Show others when you're online and your last login time. Data is always recorded.</span>
+          </div>
+          <div class="card-row-action">
+            <label class="toggle-wrap">
+              <input type="checkbox" id="onlineStatusToggle" {{if .ShowOnlineStatus}}checked{{end}} onchange="updatePrivacy(this)">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="card-group danger-zone">
+        <div class="card-group-label" style="color:rgba(201,105,107,.6)">Danger zone</div>
+        <div class="card-row">
+          <div class="card-row-icon" style="border-color:rgba(201,105,107,.2)"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg></div>
+          <div class="card-row-body">
+            <strong>Delete account</strong>
+            <span>Account enters 24-hour recovery. Login within that window to restore it.</span>
+          </div>
+          <div class="card-row-action"><button class="btn btn-danger btn-sm" onclick="openDeleteModal()">Delete</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECURITY -->
+    <div id="d-security" style="display:none">
+      <div class="section-header"><h2>Password &amp; Security</h2><p>Manage your credentials, encryption keys, and active sessions.</p></div>
+      <div class="card-group">
+        <div class="card-group-label">Change password</div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+          <div><div class="field-label">CURRENT PASSWORD</div><input type="password" class="field-input" id="pwCurrent" placeholder="Enter your current password" autocomplete="current-password"></div>
+          <div><div class="field-label">NEW PASSWORD</div><input type="password" class="field-input" id="pwNew" placeholder="At least 8 characters" autocomplete="new-password"></div>
+          <div><div class="field-label">CONFIRM NEW PASSWORD</div><input type="password" class="field-input" id="pwConfirm" placeholder="Repeat new password" autocomplete="new-password"></div>
+          <div style="display:flex;justify-content:flex-end;"><button class="btn btn-primary" id="pwSaveBtn" onclick="changePassword()">Update password</button></div>
+        </div>
+      </div>
+      <div class="card-group">
+        <div class="card-group-label">PGP encryption key</div>
+        <div class="card-row">
+          <div class="card-row-icon"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
+          <div class="card-row-body"><strong>Public PGP key</strong><span style="font-family:'JetBrains Mono',monospace;font-size:.73rem;">Not set</span></div>
+          <div class="card-row-action"><button class="btn btn-ghost btn-sm">Add key</button></div>
+        </div>
+      </div>
+      <div class="card-group">
+        <div class="card-group-label">Active sessions</div>
+        <div class="session-row">
+          <div class="session-dot on"></div>
+          <div class="session-info"><strong>This session</strong><span>Current · IP hidden</span></div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#3FFF8D;background:rgba(63,255,141,.08);padding:3px 9px;border-radius:100px;border:1px solid rgba(63,255,141,.2);">current</span>
+        </div>
+        <div style="padding:14px 20px;border-top:1px solid var(--line-inner);display:flex;justify-content:flex-end;">
+          <form method="POST" action="/logout">
+            <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+            <button type="submit" class="btn btn-danger btn-sm">Logout all devices</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div id="d-notifications" style="display:none">
+      <div class="section-header"><h2>Notifications</h2><p>Control in-app alerts and sounds.</p></div>
+      <div class="card-group">
+        <div class="card-row">
+          <div class="card-row-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <div class="card-row-body"><strong>Chat notifications</strong><span>Show a popup when you receive a new message</span></div>
+          <div class="card-row-action"><label class="toggle-wrap"><input type="checkbox" id="chatNotifToggle" checked><span class="toggle-track"></span></label></div>
+        </div>
+        <div class="card-row">
+          <div class="card-row-icon"><svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></div>
+          <div class="card-row-body"><strong>Notification sound</strong><span>Play a beep when a new message arrives</span></div>
+          <div class="card-row-action"><label class="toggle-wrap"><input type="checkbox" id="chatSoundToggle" checked><span class="toggle-track"></span></label></div>
+        </div>
+      </div>
+      <div style="margin-top:1rem;padding:0.85rem 1rem;background:rgba(162,89,255,0.06);border:1px solid rgba(162,89,255,0.15);border-radius:10px;font-size:0.82rem;color:var(--text-dim);line-height:1.6;">
+        These preferences are saved on this device only and take effect immediately.
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div id="d-payments" style="display:none">
+      <div class="section-header"><h2>Payments</h2><p>Your BTC and XMR transaction history.</p></div>
+
+      <!-- Controls -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+        <input type="text" id="paySearch" placeholder="Search product or payment ID…" oninput="filterPayments()"
+          style="flex:1;min-width:200px;background:var(--surface-card);border:1px solid var(--line);border-radius:10px;padding:9px 14px;color:var(--text);font-family:inherit;font-size:.85rem;outline:none;">
+        <select id="payCoin" onchange="filterPayments()"
+          style="background:var(--surface-card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--text);font-family:inherit;font-size:.85rem;outline:none;cursor:pointer;">
+          <option value="">All coins</option>
+          <option value="btc">Bitcoin (BTC)</option>
+          <option value="xmr">Monero (XMR)</option>
+        </select>
+        <select id="payStatus" onchange="filterPayments()"
+          style="background:var(--surface-card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--text);font-family:inherit;font-size:.85rem;outline:none;cursor:pointer;">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Paid</option>
+          <option value="expired">Not Paid</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <!-- Payment rows (rendered from Go data, filtered by JS) -->
+      <div id="payList">
+        {{if not .Payments}}
+        <div class="payment-blank">
+          <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+          <h3>No payments yet</h3>
+          <p>Your BTC and XMR transaction history will appear here.</p>
+        </div>
+        {{else}}
+        {{range .Payments}}
+        <div class="pay-row"
+          data-coin="{{.Coin}}"
+          data-status="{{.Status}}"
+          data-ispending="{{if .IsPending}}1{{else}}0{{end}}"
+          data-search="{{.ProductTitle}} {{.ID}}"
+          data-id="{{.ID}}"
+          data-secsleft="{{.SecsLeft}}">
+          <div class="pay-row-left">
+            {{if eq .Coin "btc"}}
+            <div class="pay-coin-badge pay-btc">₿</div>
+            {{else}}
+            <div class="pay-coin-badge pay-xmr">ɱ</div>
+            {{end}}
+            <div class="pay-row-info">
+              <div class="pay-product">{{.ProductTitle}}</div>
+              <div class="pay-meta">
+                <span class="pay-id">{{.ID}}</span>
+                · {{.CreatedAt.Format "Jan 2, 2006 · 15:04"}}
+                {{if .IsPending}}· <span class="pay-timer" id="timer-{{.ID}}"></span>{{end}}
+              </div>
+            </div>
+          </div>
+          <div class="pay-row-right">
+            <div class="pay-amount">
+              <span class="pay-crypto">
+                {{if eq .Coin "btc"}}{{printf "%.6f" .AmountCrypto}} BTC{{else}}{{printf "%.4f" .AmountCrypto}} XMR{{end}}
+              </span>
+              <span class="pay-usd">${{printf "%.2f" .AmountUSD}}</span>
+            </div>
+            {{if .IsPending}}
+            <a href="/pay/{{.ID}}" class="pay-status-badge pay-pending">
+              <svg viewBox="0 0 8 8" style="width:6px;height:6px;fill:currentColor;"><circle cx="4" cy="4" r="4"/></svg>
+              Pending →
+            </a>
+            {{else if eq .Status "confirmed"}}
+            <span class="pay-status-badge pay-confirmed">
+              <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.5;"><polyline points="20 6 9 17 4 12"/></svg>
+              Paid
+            </span>
+            {{else if eq .Status "cancelled"}}
+            <span class="pay-status-badge pay-cancelled">Cancelled</span>
+            {{else}}
+            <span class="pay-status-badge pay-notpaid">Not Paid</span>
+            {{end}}
+          </div>
+        </div>
+        {{end}}
+        {{end}}
+      </div>
+      <div id="payEmpty" style="display:none" class="payment-blank">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <h3>No results</h3>
+        <p>No payments match your filters.</p>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+
+<!-- ═══ MOBILE ═══ -->
+<div class="mobile-wrap mobile-only">
+  <div id="mob-home" class="mobile-home">
+    <div class="mobile-profile">
+      <div class="big-avatar">
+        {{if .AvatarURL}}<img src="{{.AvatarURL}}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">{{else}}{{.Initials}}{{end}}
+        <div class="big-avatar-status"></div>
+      </div>
+      <div class="big-avatar-info">
+        <strong>{{if .User.DisplayName}}{{.User.DisplayName}}{{else}}{{.Session.Username}}{{end}}</strong>
+        <span>Member</span>
+      </div>
+    </div>
+    <div class="card-group" style="margin-bottom:16px">
+      <button class="mobile-nav-btn" onclick="mobOpen('account','Account')">
+        <div class="mobile-nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg></div>
+        <div class="mobile-nav-text"><strong>Account</strong><span>Username, display name, bio, avatar</span></div>
+        <div class="mobile-nav-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </button>
+      <button class="mobile-nav-btn" onclick="mobOpen('security','Password &amp; Security')">
+        <div class="mobile-nav-icon"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+        <div class="mobile-nav-text"><strong>Password &amp; Security</strong><span>Password, PGP key, sessions</span></div>
+        <div class="mobile-nav-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </button>
+    </div>
+    <div class="card-group" style="margin-bottom:16px">
+      <button class="mobile-nav-btn" onclick="mobOpen('notifications','Notifications')">
+        <div class="mobile-nav-icon"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div class="mobile-nav-text"><strong>Notifications</strong><span>Chat popup and sound alerts</span></div>
+        <div class="mobile-nav-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </button>
+    </div>
+    <div class="card-group">
+      <button class="mobile-nav-btn" onclick="mobOpen('payments','Payments')">
+        <div class="mobile-nav-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+        <div class="mobile-nav-text"><strong>Payments</strong><span>BTC, XMR payment methods</span></div>
+        <div class="mobile-nav-arrow"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      </button>
+    </div>
+  </div>
+
+  <div id="mob-detail" style="display:none">
+    <button class="mobile-back-bar" onclick="mobClose()">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      <span>Settings /&nbsp;</span><strong id="mob-title">Account</strong>
+    </button>
+    <div class="mobile-detail-body" id="mob-body"></div>
+  </div>
+</div>
+
+
+<!-- ═══ EDIT MODAL ═══ -->
+<div id="editModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg);border:1px solid var(--nav-border);border-radius:18px;padding:28px;width:90%;max-width:440px;box-shadow:0 30px 80px rgba(0,0,0,.7);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 id="modalTitle" style="font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:600;">Edit</h3>
+      <button onclick="closeModal()" style="background:transparent;border:none;color:var(--text-dimmer);cursor:pointer;font-size:1.2rem;line-height:1;padding:4px;">✕</button>
+    </div>
+    <div class="field-label" id="modalLabel">VALUE</div>
+    <input  type="text"    class="field-input" id="modalInput"    placeholder="" style="margin-bottom:0;">
+    <textarea              class="field-input" id="modalTextarea" placeholder="" rows="4" style="display:none;margin-bottom:0;resize:vertical;"></textarea>
+    <div class="field-hint" id="modalHint"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modalSaveBtn" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+var csrf = '{{.CSRFToken}}';
+
+/* ── THEME ── */
+(function(){
+  var root = document.documentElement;
+  var btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var isLight = root.getAttribute('data-theme') === 'light';
+    var theme = isLight ? 'dark' : 'light';
+    localStorage.setItem('shadow-theme', theme);
+    document.cookie = 'shadow-theme=' + theme + '; path=/; max-age=31536000; samesite=strict';
+    if (isLight) { root.removeAttribute('data-theme'); } else { root.setAttribute('data-theme','light'); }
+  });
+})();
+
+/* ── DESKTOP PANELS ── */
+var dPanels = ['account','security','notifications','payments'];
+function deskSwitch(id, btn) {
+  dPanels.forEach(function(p){ document.getElementById('d-'+p).style.display='none'; });
+  document.getElementById('d-'+id).style.display = 'block';
+  document.querySelectorAll('.sidebar-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  if (id === 'payments') { initPaymentTimers(); }
+}
+
+/* ── PAYMENT FILTER + TIMERS ── */
+function filterPayments() {
+  var search = (document.getElementById('paySearch') || {value:''}).value.toLowerCase();
+  var coin   = (document.getElementById('payCoin')   || {value:''}).value.toLowerCase();
+  var status = (document.getElementById('payStatus') || {value:''}).value.toLowerCase();
+  var rows   = document.querySelectorAll('.pay-row');
+  var visible = 0;
+  rows.forEach(function(row) {
+    var matchCoin   = !coin   || row.dataset.coin   === coin;
+    var matchSearch = !search || row.dataset.search.toLowerCase().indexOf(search) !== -1;
+    var rowStatus   = row.dataset.status;
+    var rowPending  = row.dataset.ispending === '1';
+    var matchStatus = true;
+    if (status) {
+      if (status === 'pending')   matchStatus = rowPending;
+      else if (status === 'confirmed')  matchStatus = rowStatus === 'confirmed';
+      else if (status === 'expired')    matchStatus = (rowStatus === 'expired' || (rowStatus === 'pending' && !rowPending));
+      else if (status === 'cancelled')  matchStatus = rowStatus === 'cancelled';
+    }
+    var show = matchCoin && matchSearch && matchStatus;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  var emptyEl = document.getElementById('payEmpty');
+  var listEl  = document.getElementById('payList');
+  if (emptyEl && listEl) {
+    if (rows.length === 0) {
+      emptyEl.style.display = 'none';
+    } else {
+      emptyEl.style.display = visible === 0 ? 'flex' : 'none';
+    }
+  }
+}
+
+function initPaymentTimers() {
+  var rows = document.querySelectorAll('.pay-row[data-ispending="1"]');
+  rows.forEach(function(row) {
+    var secs = parseInt(row.dataset.secsleft, 10) || 0;
+    var id   = row.dataset.id;
+    var el   = document.getElementById('timer-' + id);
+    if (!el || secs <= 0) return;
+    var deadline = Date.now() + secs * 1000;
+    function tick() {
+      var left = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
+      var m = Math.floor(left / 60);
+      var s = left % 60;
+      el.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+      if (left > 0) setTimeout(tick, 1000);
+      else el.textContent = '00:00';
+    }
+    tick();
+  });
+}
+
+/* ── MOBILE ── */
+function mobOpen(section, title) {
+  document.getElementById('mob-home').style.display = 'none';
+  document.getElementById('mob-detail').style.display = 'block';
+  document.getElementById('mob-title').textContent = title;
+  var panel = document.getElementById('d-' + section);
+  document.getElementById('mob-body').innerHTML = panel ? panel.innerHTML : '';
+  if(section === 'notifications' && window._reinitNotifToggles) {
+    setTimeout(window._reinitNotifToggles, 0);
+  }
+}
+function mobClose() {
+  document.getElementById('mob-home').style.display  = 'block';
+  document.getElementById('mob-detail').style.display = 'none';
+}
+
+/* ── MODAL ── */
+var currentModalKey = '';
+var modalMeta = {
+  'display-name': {
+    title:'Edit display name', label:'DISPLAY NAME',
+    placeholder:'Your display name', hint:'Max 100 characters.',
+    endpoint:'/settings/display-name', multiline:false, emptyText:''
+  },
+  'bio': {
+    title:'Edit bio', label:'BIO',
+    placeholder:'A short bio (optional)', hint:'Max 300 characters.',
+    endpoint:'/settings/bio', multiline:true, emptyText:'Not set'
+  },
+  'email': {
+    title:'Add email address', label:'EMAIL',
+    placeholder:'you@example.com', hint:'Optional. Never shown publicly — used only for notifications.',
+    endpoint:'/settings/email', multiline:false, emptyText:'not set'
+  }
+};
+
+function openModal(key) {
+  currentModalKey = key;
+  var meta = modalMeta[key];
+  document.getElementById('modalTitle').textContent = meta.title;
+  document.getElementById('modalLabel').textContent = meta.label;
+  document.getElementById('modalHint').textContent  = meta.hint || '';
+
+  var inp  = document.getElementById('modalInput');
+  var ta   = document.getElementById('modalTextarea');
+  var saveBtn = document.getElementById('modalSaveBtn');
+  saveBtn.disabled = false;
+  saveBtn.textContent = 'Save';
+
+  var currentEls = document.querySelectorAll('[data-val="' + key + '"]');
+  var currentVal = '';
+  if (currentEls.length) {
+    var raw = currentEls[0].textContent.trim();
+    var isEmpty = (raw === meta.emptyText || raw.indexOf('not set') === 0 || raw === 'Not set');
+    currentVal = isEmpty ? '' : raw;
+  }
+
+  if (meta.multiline) {
+    inp.style.display = 'none';
+    ta.style.display  = 'block';
+    ta.placeholder    = meta.placeholder;
+    ta.maxLength      = 300;
+    ta.value          = currentVal;
+    setTimeout(function(){ ta.focus(); }, 80);
+  } else {
+    ta.style.display  = 'none';
+    inp.style.display = 'block';
+    inp.placeholder   = meta.placeholder;
+    inp.maxLength     = key === 'email' ? 200 : 100;
+    inp.value         = currentVal;
+    setTimeout(function(){ inp.focus(); inp.select(); }, 80);
+  }
+
+  var modal = document.getElementById('editModal');
+  modal.style.display = 'flex';
+}
+
+function saveModal() {
+  var meta    = modalMeta[currentModalKey];
+  var saveBtn = document.getElementById('modalSaveBtn');
+  var val     = meta.multiline
+    ? document.getElementById('modalTextarea').value.trim()
+    : document.getElementById('modalInput').value.trim();
+
+  saveBtn.disabled    = true;
+  saveBtn.textContent = 'Saving…';
+
+  var fd = new FormData();
+  fd.append('_csrf', csrf);
+  fd.append('value', val);
+
+  fetch(meta.endpoint, {method:'POST', body:fd})
+    .then(function(r){
+      saveBtn.disabled    = false;
+      saveBtn.textContent = 'Save';
+      if (!r.ok){
+        r.text().then(function(t){ showToast(t || 'Error saving','error'); });
+        return;
+      }
+      updateFieldDisplay(currentModalKey, val, meta.emptyText);
+      if (currentModalKey === 'display-name' && val) {
+        var nameEl = document.getElementById('bigAvatarName');
+        if (nameEl) nameEl.textContent = val;
+      }
+      showToast('Saved!','success');
+      closeModal();
+    })
+    .catch(function(){
+      saveBtn.disabled    = false;
+      saveBtn.textContent = 'Save';
+      showToast('Network error','error');
+    });
+}
+
+function updateFieldDisplay(key, val, emptyText) {
+  document.querySelectorAll('[data-val="' + key + '"]').forEach(function(el){
+    if (val) {
+      el.textContent    = val;
+      el.style.fontStyle = '';
+      el.style.color     = '';
+    } else {
+      el.textContent    = emptyText || 'Not set';
+      el.style.fontStyle = 'italic';
+      el.style.color     = 'var(--text-dimmer)';
+    }
+  });
+}
+
+function closeModal() {
+  document.getElementById('editModal').style.display = 'none';
+  var saveBtn = document.getElementById('modalSaveBtn');
+  saveBtn.disabled    = false;
+  saveBtn.textContent = 'Save';
+}
+
+document.getElementById('editModal').addEventListener('click', function(e){
+  if (e.target === this) closeModal();
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ── URL PARAM SECTION AUTO-SWITCH ── */
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var sec = params.get('section');
+  if (sec) {
+    var btn = document.querySelector('.sidebar-btn[onclick*="\''+sec+'\'"]');
+    if (btn) { deskSwitch(sec, btn); }
+  }
+})();
+
+/* ── AVATAR UPLOAD ── */
+document.getElementById('avatarFileInput').addEventListener('change', function(e){
+  var file = e.target.files[0];
+  if (!file) return;
+  var sp = document.getElementById('spinner');
+  sp.classList.add('on');
+  var fd = new FormData();
+  fd.append('avatar', file);
+  fd.append('_csrf', csrf);
+  fetch('/settings/avatar', {method:'POST', body:fd})
+    .then(function(r){
+      sp.classList.remove('on');
+      if (!r.ok){ r.text().then(function(t){ showToast(t || 'Upload failed','error'); }); return; }
+      r.json().then(function(j){
+        var img = document.getElementById('bigAvatarImg');
+        var ini = document.getElementById('bigAvatarInitials');
+        if (img){ img.src = j.url; img.style.display = 'block'; }
+        if (ini) ini.style.display = 'none';
+        var navAv = document.getElementById('navAvatar');
+        if (navAv) navAv.innerHTML = '<img src="'+j.url+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+        showToast('Avatar updated!','success');
+      });
+    })
+    .catch(function(){ sp.classList.remove('on'); showToast('Upload failed','error'); });
+  this.value = '';
+});
+
+/* ── BANNER UPLOAD ── */
+document.getElementById('bannerFileInput').addEventListener('change', function(e){
+  var file = e.target.files[0];
+  if (!file) return;
+  var sp = document.getElementById('spinner');
+  sp.classList.add('on');
+  var fd = new FormData();
+  fd.append('banner', file);
+  fd.append('_csrf', csrf);
+  fetch('/settings/banner', {method:'POST', body:fd})
+    .then(function(r){
+      sp.classList.remove('on');
+      if (!r.ok){ r.text().then(function(t){ showToast(t || 'Upload failed','error'); }); return; }
+      r.json().then(function(j){
+        var img = document.getElementById('settingsBannerImg');
+        var wrap = document.getElementById('settingsBannerWrap');
+        if (img){ img.src = j.url; img.style.display = 'block'; }
+        if (wrap){ wrap.style.background = 'none'; }
+        showToast('Banner updated!','success');
+      });
+    })
+    .catch(function(){ sp.classList.remove('on'); showToast('Upload failed','error'); });
+  this.value = '';
+});
+
+/* ── TOAST ── */
+function showToast(msg, type){
+  var t   = document.getElementById('toast');
+  var m   = document.getElementById('toastMsg');
+  var ico = document.getElementById('toastIcon');
+  t.className = 's-toast ' + (type || 'success');
+  m.textContent = msg;
+  ico.innerHTML = type === 'error'
+    ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+    : '<polyline points="20 6 9 17 4 12"/>';
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+/* ── REMOVE AVATAR ── */
+function removeAvatar() {
+  var fd = new FormData();
+  fd.append('_csrf', csrf);
+  fetch('/settings/avatar/remove', {method:'POST', body:fd})
+    .then(function(r){
+      if (!r.ok){ r.text().then(function(t){ showToast(t||'Error removing avatar','error'); }); return; }
+      var img = document.getElementById('bigAvatarImg');
+      var ini = document.getElementById('bigAvatarInitials');
+      var navAv = document.getElementById('navAvatar');
+      var btn = document.getElementById('removeAvatarBtn');
+      if (img){ img.src=''; img.style.display='none'; }
+      if (ini){ ini.style.display=''; }
+      if (navAv){ navAv.innerHTML = navAv.dataset.initials || navAv.textContent; }
+      if (btn){ btn.style.display='none'; }
+      showToast('Avatar removed','success');
+    })
+    .catch(function(){ showToast('Error removing avatar','error'); });
+}
+
+/* ── HELPERS: read/write inputs that may be duplicated in mobile mob-body ── */
+function activeInput(id) {
+  var mobDetail = document.getElementById('mob-detail');
+  if (mobDetail && mobDetail.style.display === 'block') {
+    var body = document.getElementById('mob-body');
+    if (body) {
+      var el = body.querySelector('[id="' + id + '"]');
+      if (el) return el;
+    }
+  }
+  return document.getElementById(id);
+}
+function activeBtn(id) {
+  var mobDetail = document.getElementById('mob-detail');
+  if (mobDetail && mobDetail.style.display === 'block') {
+    var body = document.getElementById('mob-body');
+    if (body) {
+      var el = body.querySelector('[id="' + id + '"]');
+      if (el) return el;
+    }
+  }
+  return document.getElementById(id);
+}
+
+/* ── CHANGE PASSWORD ── */
+function changePassword() {
+  var curEl  = activeInput('pwCurrent');
+  var nwEl   = activeInput('pwNew');
+  var confEl = activeInput('pwConfirm');
+  var btn    = activeBtn('pwSaveBtn');
+  var cur  = curEl  ? curEl.value  : '';
+  var nw   = nwEl   ? nwEl.value   : '';
+  var conf = confEl ? confEl.value : '';
+  if (!cur || !nw || !conf) { showToast('All fields are required','error'); return; }
+  if (nw !== conf) { showToast('New passwords do not match','error'); return; }
+  if (nw.length < 8) { showToast('Password must be at least 8 characters','error'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  var fd = new FormData();
+  fd.append('_csrf', csrf);
+  fd.append('current', cur);
+  fd.append('new', nw);
+  fd.append('confirm', conf);
+  fetch('/settings/password', {method:'POST', body:fd})
+    .then(function(r){
+      if (btn) { btn.disabled = false; btn.textContent = 'Update password'; }
+      if (!r.ok){ r.text().then(function(t){ showToast(t||'Error changing password','error'); }); return; }
+      if (curEl)  curEl.value  = '';
+      if (nwEl)   nwEl.value   = '';
+      if (confEl) confEl.value = '';
+      showToast('Password updated!','success');
+    })
+    .catch(function(){
+      if (btn) { btn.disabled = false; btn.textContent = 'Update password'; }
+      showToast('Network error','error');
+    });
+}
+
+/* ── NOTIFICATION TOGGLES ── */
+(function(){
+  var notifKey = 'shadow_chat_notif';
+  var soundKey = 'shadow_chat_sound';
+  function initToggles(){
+    var notifEl = document.getElementById('chatNotifToggle');
+    var soundEl = document.getElementById('chatSoundToggle');
+    if(!notifEl||!soundEl) return;
+    notifEl.checked = localStorage.getItem(notifKey) !== '0';
+    soundEl.checked = localStorage.getItem(soundKey) !== '0';
+    notifEl.addEventListener('change', function(){
+      localStorage.setItem(notifKey, this.checked ? '1' : '0');
+      if(!this.checked) soundEl.checked = false, localStorage.setItem(soundKey,'0');
+    });
+    soundEl.addEventListener('change', function(){
+      localStorage.setItem(soundKey, this.checked ? '1' : '0');
+    });
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', initToggles);
+  } else {
+    initToggles();
+  }
+  var _origMobOpen = typeof mobOpen === 'function' ? mobOpen : null;
+  window._reinitNotifToggles = initToggles;
+})();
+
+function syncToggles(master) {
+  document.querySelectorAll('.ch-toggle').forEach(function(t){ t.checked = master.checked; });
+}
+
+/* ── PRIVACY TOGGLE ── */
+function updatePrivacy(cb) {
+  var fd = new FormData();
+  fd.append('_csrf', csrf);
+  fd.append('show_online_status', cb.checked ? '1' : '0');
+  fetch('/settings/privacy', {method:'POST', body:fd})
+    .then(function(r){ if(r.ok) showToast('Privacy settings saved','success'); else showToast('Error saving','error'); })
+    .catch(function(){ showToast('Network error','error'); });
+}
+
+/* ── DELETE ACCOUNT MODAL ── */
+function openDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'flex';
+  setTimeout(function(){ var el=document.getElementById('deletePwInput'); if(el) el.focus(); }, 80);
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'none';
+  var el = document.getElementById('deletePwInput'); if(el) el.value = '';
+  var errEl = document.getElementById('deleteErrMsg'); if(errEl) errEl.style.display='none';
+  var btn = document.getElementById('deleteConfirmBtn');
+  if(btn){ btn.disabled=false; btn.textContent='Delete my account'; }
+}
+function confirmDelete() {
+  var pwEl  = document.getElementById('deletePwInput');
+  var errEl = document.getElementById('deleteErrMsg');
+  var btn   = document.getElementById('deleteConfirmBtn');
+  var pw = pwEl ? pwEl.value : '';
+  if (!pw) { if(errEl){errEl.textContent='Password is required';errEl.style.display='block';} return; }
+  if(btn){ btn.disabled=true; btn.textContent='Deleting…'; }
+  if(errEl) errEl.style.display='none';
+  var fd = new FormData();
+  fd.append('_csrf', csrf);
+  fd.append('password', pw);
+  fetch('/settings/delete-account', {method:'POST', body:fd})
+    .then(function(r){
+      if (r.ok) { return r.json().then(function(d){ window.location.href = d.redirect || '/login'; }); }
+      r.text().then(function(t){
+        if(errEl){errEl.textContent=t||'Error';errEl.style.display='block';}
+        if(btn){btn.disabled=false;btn.textContent='Delete my account';}
+      });
+    })
+    .catch(function(){
+      if(errEl){errEl.textContent='Network error';errEl.style.display='block';}
+      if(btn){btn.disabled=false;btn.textContent='Delete my account';}
+    });
+}
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape' && document.getElementById('deleteModal') && document.getElementById('deleteModal').style.display==='flex') closeDeleteModal();
+});
+
+/* ── HEARTBEAT ── */
+(function(){
+  function sendHB(){ fetch('/api/heartbeat',{credentials:'same-origin'}).catch(function(){}); }
+  sendHB();
+  setInterval(function(){ if(!document.hidden) sendHB(); }, 30000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) sendHB(); });
+})();
+</script>
+
+<!-- Delete Account Confirm Modal -->
+<div id="deleteModal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg);border:1px solid rgba(201,105,107,.35);border-radius:18px;padding:28px;width:90%;max-width:420px;box-shadow:0 30px 80px rgba(0,0,0,.7);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:600;color:#C9696B;">Delete Account</h3>
+      <button onclick="closeDeleteModal()" style="background:transparent;border:none;color:var(--text-dimmer);cursor:pointer;font-size:1.2rem;line-height:1;padding:4px;">✕</button>
+    </div>
+    <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:18px;line-height:1.65;">Your account will be <strong style="color:var(--text);">soft-deleted</strong> and enter a <strong style="color:var(--text);">24-hour recovery window</strong>. Login with your credentials within that period to fully restore it. After 24 hours all data is permanently removed.</p>
+    <div class="field-label">CONFIRM YOUR PASSWORD</div>
+    <input type="password" class="field-input" id="deletePwInput" placeholder="Enter your current password" autocomplete="current-password" style="margin-bottom:10px;" onkeydown="if(event.key==='Enter')confirmDelete()">
+    <div id="deleteErrMsg" style="display:none;font-size:.8rem;color:#C9696B;margin-bottom:4px;padding:0 2px;"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">
+      <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn btn-danger" id="deleteConfirmBtn" onclick="confirmDelete()">Delete my account</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
+{{end}}

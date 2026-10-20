@@ -1,0 +1,58 @@
+{{define "admin-title"}}User Management{{end}}
+
+{{define "admin-content"}}
+<div class="page-header">
+  <h1>User Management</h1>
+  <p>Search, view, ban or delete users.</p>
+</div>
+
+<form class="search-bar" method="GET" action="{{.AdminPath}}/users">
+  <input type="text" name="q" value="{{.Search}}" placeholder="Search by username, display name or email…">
+  <button type="submit" class="btn btn-primary">Search</button>
+  {{if .Search}}<a href="{{.AdminPath}}/users" class="btn btn-ghost">Clear</a>{{end}}
+</form>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Display Name</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Sessions</th>
+          <th>Joined</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{$ap := .AdminPath}}
+        {{range .Users}}
+        <tr>
+          <td><span style="color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:0.8rem;">{{.ID}}</span></td>
+          <td><a href="{{$ap}}/users/{{.ID}}" class="row-link" style="font-weight:600;">@{{.Username}}</a></td>
+          <td>{{if .DisplayName}}{{.DisplayName}}{{else}}<span style="color:var(--text-dimmer)">—</span>{{end}}</td>
+          <td>{{if .Email}}{{.Email}}{{else}}<span style="color:var(--text-dimmer)">—</span>{{end}}</td>
+          <td>
+            {{if .Banned}}
+              <span class="badge badge-red">Banned</span>
+            {{else if .IsOnline}}
+              <span class="badge badge-green">Online</span>
+            {{else if .IsIdle}}
+              <span class="badge badge-yellow">Idle</span>
+            {{else}}
+              <span class="badge badge-dim">Offline</span>
+            {{end}}
+          </td>
+          <td><span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;">{{.SessionCount}}</span></td>
+          <td style="color:var(--text-dim);font-size:0.85rem;">{{.CreatedAt.Format "Jan 2, 2006"}}</td>
+        </tr>
+        {{else}}
+        <tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:2rem;">No users found.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{end}}

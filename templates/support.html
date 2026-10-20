@@ -1,0 +1,574 @@
+{{define "title"}}Support — Shadow{{end}}
+
+{{define "content"}}
+<style>
+.sup-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 108px 1.5rem 5rem;
+}
+
+/* ── View control ── */
+#view-main, #view-tickets, #view-create { display: none; }
+
+/* ── Hero ── */
+.sup-hero {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+.sup-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: #a259ff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  padding: 4px 14px;
+  border: 1px solid rgba(162,89,255,0.25);
+  border-radius: 100px;
+  background: rgba(162,89,255,0.07);
+}
+.sup-eyebrow svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; }
+.sup-hero h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.9rem, 5vw, 2.8rem);
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 0.85rem;
+  line-height: 1.15;
+}
+.sup-hero p {
+  color: var(--text-dim);
+  font-size: 1rem;
+  max-width: 500px;
+  margin: 0 auto 2rem;
+  line-height: 1.7;
+}
+
+/* ── CTA buttons ── */
+.raise-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.85rem 2.2rem;
+  background: #a259ff;
+  color: #ffffff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s, transform 0.15s;
+  box-shadow: 0 0 28px rgba(162,89,255,0.3);
+}
+.raise-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.raise-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+
+.open-ticket-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.62rem 1.4rem;
+  background: #a259ff;
+  color: #ffffff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.open-ticket-btn:hover { opacity: 0.85; }
+.open-ticket-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+
+/* ── Section label ── */
+.sup-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dimmer);
+  margin-bottom: 1rem;
+}
+
+/* ── Use-case grid ── */
+.uc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 2.5rem;
+}
+.uc-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.1rem 1.1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.uc-icon {
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  background: rgba(162,89,255,0.1);
+  border: 1px solid rgba(162,89,255,0.18);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.uc-icon svg { width: 16px; height: 16px; stroke: #a259ff; fill: none; stroke-width: 1.8; }
+.uc-title { font-family: 'Space Grotesk', sans-serif; font-size: 0.86rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.uc-desc { font-size: 0.78rem; color: var(--text-dim); line-height: 1.5; }
+
+/* ── Telegram cards ── */
+.tg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.1rem;
+  margin-bottom: 2.5rem;
+}
+.tg-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.5rem 1.4rem;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.tg-card:hover { border-color: rgba(162,89,255,0.4); transform: translateY(-2px); }
+.tg-card-top { display: flex; align-items: center; gap: 12px; }
+.tg-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(162,89,255,0.18), rgba(100,149,237,0.18));
+  border: 1px solid rgba(162,89,255,0.22);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.tg-icon svg { width: 22px; height: 22px; fill: #a259ff; }
+.tg-title { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; color: var(--text); }
+.tg-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.67rem; color: #a259ff; background: rgba(162,89,255,0.1); border: 1px solid rgba(162,89,255,0.2); border-radius: 5px; padding: 2px 7px; display: inline-block; margin-top: 2px; }
+.tg-desc { font-size: 0.84rem; color: var(--text-dim); line-height: 1.6; }
+.tg-handle { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-dimmer); display: flex; align-items: center; gap: 6px; padding-top: 0.6rem; border-top: 1px solid var(--line); }
+.tg-handle svg { width: 12px; height: 12px; stroke: var(--text-dimmer); fill: none; stroke-width: 1.8; }
+.tg-cta { display: inline-flex; align-items: center; gap: 6px; font-family: 'Space Grotesk', sans-serif; font-size: 0.84rem; font-weight: 600; color: #a259ff; margin-top: auto; }
+.tg-cta svg { width: 13px; height: 13px; stroke: #a259ff; fill: none; stroke-width: 2; }
+
+/* ── Info box ── */
+.sup-info {
+  background: rgba(162,89,255,0.05);
+  border: 1px solid rgba(162,89,255,0.18);
+  border-radius: 12px;
+  padding: 1.1rem 1.3rem;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.sup-info svg { width: 17px; height: 17px; stroke: #a259ff; fill: none; stroke-width: 1.8; flex-shrink: 0; margin-top: 1px; }
+.sup-info p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.65; margin: 0; }
+.sup-info strong { color: var(--text); }
+
+/* ── My Tickets view ── */
+.tix-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.tix-header h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+}
+.tix-search {
+  flex: 1;
+  min-width: 180px;
+  max-width: 280px;
+  background: var(--surface-card, rgba(255,255,255,0.04));
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 14px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.tix-search:focus { border-color: rgba(162,89,255,0.5); }
+.tix-search::placeholder { color: var(--text-dimmer); }
+
+.ticket-list { display: flex; flex-direction: column; gap: 0.65rem; }
+.ticket-row {
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 1rem 1.2rem;
+  text-decoration: none; transition: border-color 0.15s;
+}
+.ticket-row:hover { border-color: rgba(162,89,255,0.35); }
+.ticket-row-info { flex: 1; min-width: 0; }
+.ticket-row-title { font-size: 0.88rem; font-weight: 600; color: var(--text); margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ticket-row-meta { font-size: 0.74rem; color: var(--text-dimmer); }
+.ticket-row-meta .mono { font-family: 'JetBrains Mono', monospace; }
+.t-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 100px;
+  font-size: 0.7rem; font-weight: 600; white-space: nowrap; flex-shrink: 0;
+}
+.t-badge-open { background: rgba(52,211,153,0.12); color: #34D399; border: 1px solid rgba(52,211,153,0.3); }
+.t-badge-replied { background: rgba(162,89,255,0.12); color: #a259ff; border: 1px solid rgba(162,89,255,0.3); }
+.t-badge-closed { background: var(--surface); color: var(--text-dim); border: 1px solid var(--line); }
+.t-badge svg { width: 7px; height: 7px; fill: currentColor; }
+
+.tix-empty {
+  text-align: center; padding: 3rem 1rem;
+  color: var(--text-dimmer); font-size: 0.88rem;
+}
+.tix-empty svg { width: 36px; height: 36px; stroke: var(--text-dimmer); fill: none; stroke-width: 1.2; margin: 0 auto 0.75rem; display: block; }
+
+/* ── Back bar ── */
+.sup-back {
+  display: inline-flex; align-items: center; gap: 7px;
+  color: var(--text-dim); text-decoration: none; font-size: 0.86rem;
+  margin-bottom: 1.75rem; transition: color 0.15s; cursor: pointer;
+  background: none; border: none; padding: 0; font-family: inherit;
+}
+.sup-back:hover { color: var(--text); }
+.sup-back svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ── Create view ── */
+.create-hero { margin-bottom: 2rem; }
+.create-hero h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+.create-hero p { font-size: 0.9rem; color: var(--text-dim); }
+
+.create-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.75rem 1.5rem;
+}
+.form-field { margin-bottom: 1.1rem; }
+.form-field label {
+  display: block; font-size: 0.77rem; font-weight: 600;
+  color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em;
+  margin-bottom: 0.4rem;
+}
+.form-field input, .form-field select, .form-field textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--line);
+  border-radius: 9px; padding: 0.65rem 0.9rem; color: var(--text);
+  font-family: inherit; font-size: 0.9rem; outline: none;
+  transition: border-color 0.15s;
+}
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+  border-color: rgba(162,89,255,0.5);
+}
+.form-field select option { background: #0d0d0f; }
+.form-field textarea { resize: vertical; min-height: 110px; }
+.form-field .hint { font-size: 0.74rem; color: var(--text-dimmer); margin-top: 0.35rem; }
+.form-error {
+  background: rgba(255,69,69,0.08); border: 1px solid rgba(255,69,69,0.25);
+  border-radius: 9px; padding: 0.7rem 1rem; color: #FF7070;
+  font-size: 0.875rem; margin-bottom: 1.2rem;
+}
+
+.submit-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 0.7rem 1.6rem; background: #a259ff; color: #ffffff;
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.92rem; font-weight: 700;
+  border: none; border-radius: 9px; cursor: pointer; transition: opacity 0.15s;
+  text-decoration: none;
+}
+.submit-btn:hover { opacity: 0.85; }
+.submit-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+@media(max-width: 540px) {
+  .tg-grid, .uc-grid { grid-template-columns: 1fr; }
+  .tix-header { flex-direction: column; align-items: flex-start; }
+  .tix-search { max-width: 100%; }
+}
+</style>
+
+<div class="sup-wrap" id="supWrap">
+
+  <!-- ══ MAIN VIEW ══ -->
+  <div id="view-main">
+
+    <!-- Hero -->
+    <div class="sup-hero">
+      <div class="sup-eyebrow">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Support Center
+      </div>
+      <h1>We're here to help</h1>
+      <p>Got an issue, question, or need to talk to a human? Raise a ticket or reach us on Telegram.</p>
+
+      {{if .Session}}
+      <button class="raise-btn" onclick="navTo('tickets')">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Raise a Ticket
+      </button>
+      {{else}}
+      <a href="/login" class="raise-btn">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Login to Raise a Ticket
+      </a>
+      {{end}}
+    </div>
+
+    <!-- What support can help with -->
+    <div class="sup-label">What support can help with</div>
+    <div class="uc-grid">
+      <div class="uc-card">
+        <div class="uc-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div>
+        <div><div class="uc-title">Website issues</div><div class="uc-desc">Report bugs or technical problems.</div></div>
+      </div>
+      <div class="uc-card">
+        <div class="uc-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/><line x1="18" y1="13" x2="18" y2="19"/><line x1="15" y1="16" x2="21" y2="16"/></svg></div>
+        <div><div class="uc-title">Account / ban appeal</div><div class="uc-desc">Think your ban was a mistake? Appeal it.</div></div>
+      </div>
+      <div class="uc-card">
+        <div class="uc-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+        <div><div class="uc-title">Payment not confirmed</div><div class="uc-desc">Sent crypto but payment is still pending?</div></div>
+      </div>
+      <div class="uc-card">
+        <div class="uc-icon"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+        <div><div class="uc-title">Purchase not received</div><div class="uc-desc">Payment confirmed but product inaccessible?</div></div>
+      </div>
+      <div class="uc-card">
+        <div class="uc-icon"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <div><div class="uc-title">Refund / overpayment</div><div class="uc-desc">Sent too much or need a refund?</div></div>
+      </div>
+      <div class="uc-card">
+        <div class="uc-icon"><svg viewBox="0 0 24 24"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div><div class="uc-title">Report someone</div><div class="uc-desc">Spotted abuse or rule-breaking? Let us know.</div></div>
+      </div>
+    </div>
+
+    <!-- Telegram -->
+    <div class="sup-label">Reach us on Telegram</div>
+    <div class="tg-grid">
+      <a class="tg-card" href="https://t.me/shadow_support_C2" target="_blank" rel="noopener noreferrer">
+        <div class="tg-card-top">
+          <div class="tg-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
+          </div>
+          <div>
+            <div class="tg-title">Official Channel</div>
+            <span class="tg-badge">Announcements</span>
+          </div>
+        </div>
+        <div class="tg-desc">Join for the latest Shadow updates, new features, maintenance notices, and all official instructions. <strong style="color:var(--text);">This is the only official source.</strong></div>
+        <div class="tg-handle">
+          <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          t.me/shadow_support_C2
+        </div>
+        <div class="tg-cta">Open channel <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </a>
+      <a class="tg-card" href="https://t.me/shadow_legion_support" target="_blank" rel="noopener noreferrer">
+        <div class="tg-card-top">
+          <div class="tg-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
+          </div>
+          <div>
+            <div class="tg-title">Live Support</div>
+            <span class="tg-badge">Direct message</span>
+          </div>
+        </div>
+        <div class="tg-desc">Need to talk to a real person? Message our support account directly for ban appeals, reports, account issues, or anything that needs a personal response.</div>
+        <div class="tg-handle">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>
+          @shadow_legion_support
+        </div>
+        <div class="tg-cta">Message support <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </a>
+    </div>
+
+    <!-- Info -->
+    <div class="sup-info">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      <p><strong>Official instructions only come through the Telegram channel.</strong> If someone claims to be Shadow support and asks for your password or personal info — that is a scam. We will never ask for your password.</p>
+    </div>
+
+  </div><!-- end #view-main -->
+
+
+  <!-- ══ MY TICKETS VIEW ══ -->
+  <div id="view-tickets">
+
+    <button class="sup-back" onclick="navTo('main')">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back to support
+    </button>
+
+    <div class="tix-header">
+      <h2>My Tickets</h2>
+      <input type="text" class="tix-search" id="tixSearch" placeholder="Search tickets…" oninput="filterTickets()" autocomplete="off">
+      <button class="open-ticket-btn" onclick="navTo('create')">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Open a Ticket
+      </button>
+    </div>
+
+    {{if .MyTickets}}
+    <div class="ticket-list" id="tixList">
+      {{range .MyTickets}}
+      <a href="/support/ticket/{{.ID}}" class="ticket-row" data-title="{{.Title}}" data-cat="{{.Category}}">
+        <div class="ticket-row-info">
+          <div class="ticket-row-title">{{.Title}}</div>
+          <div class="ticket-row-meta">
+            <span class="mono">#{{.ID}}</span>
+            · {{.Category}}
+            · {{.CreatedAt.Format "Jan 2, 2006"}}
+            {{if gt .ReplyCount 0}}· <span style="color:#a259ff;">{{.ReplyCount}} repl{{if eq .ReplyCount 1}}y{{else}}ies{{end}}</span>{{end}}
+          </div>
+        </div>
+        {{if eq .Status "closed"}}
+        <span class="t-badge t-badge-closed">Closed</span>
+        {{else if .HasAdminReply}}
+        <span class="t-badge t-badge-replied">
+          <svg viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>Replied
+        </span>
+        {{else}}
+        <span class="t-badge t-badge-open">
+          <svg viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>Open
+        </span>
+        {{end}}
+      </a>
+      {{end}}
+    </div>
+    <div id="tixEmpty" style="display:none;" class="tix-empty">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      No tickets match your search.
+    </div>
+    {{else}}
+    <div class="tix-empty">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      You haven't raised any tickets yet.<br>
+      <button onclick="navTo('create')" style="margin-top:0.75rem;background:#a259ff;color:#fff;border:none;border-radius:8px;padding:0.5rem 1.2rem;font-family:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;">Open your first ticket</button>
+    </div>
+    {{end}}
+
+  </div><!-- end #view-tickets -->
+
+
+  <!-- ══ CREATE VIEW ══ -->
+  <div id="view-create">
+
+    <button class="sup-back" onclick="navTo('tickets')">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back to my tickets
+    </button>
+
+    <div class="create-hero">
+      <h2>Raise a Support Ticket</h2>
+      <p>Describe your issue and our team will respond as soon as possible.</p>
+    </div>
+
+    <div class="create-card">
+      {{if .Error}}
+      <div class="form-error">{{.Error}}</div>
+      {{end}}
+
+      {{if .Session}}
+      <form method="POST" action="/support">
+        <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+
+        <div class="form-field">
+          <label>Category</label>
+          <select name="category">
+            <option value="website">Website issue / bug</option>
+            <option value="account">Account problem / ban appeal</option>
+            <option value="payment-pending">Payment sent, not confirmed</option>
+            <option value="purchase-missing">Purchase not received</option>
+            <option value="refund">Refund / overpayment</option>
+            <option value="report">Report someone</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label>Title <span style="color:#FF7070;">*</span></label>
+          <input type="text" name="title" placeholder="Brief summary of your issue" maxlength="150" required>
+        </div>
+
+        <div class="form-field">
+          <label>Description <span style="color:#FF7070;">*</span></label>
+          <textarea name="body" rows="5" placeholder="Describe the issue in detail. For payment issues, include your payment ID and transaction hash." required></textarea>
+        </div>
+
+        <div style="display:flex;gap:0.85rem;align-items:center;flex-wrap:wrap;">
+          <button type="submit" class="submit-btn">
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Submit Ticket
+          </button>
+          <button type="button" onclick="navTo('tickets')" style="background:none;border:none;color:var(--text-dim);font-family:inherit;font-size:0.9rem;cursor:pointer;padding:0;">Cancel</button>
+        </div>
+      </form>
+      {{else}}
+      <div style="text-align:center;padding:2rem 1rem;">
+        <p style="color:var(--text-dim);font-size:0.95rem;margin-bottom:1.25rem;">You must be logged in to raise a support ticket.</p>
+        <a href="/login" class="submit-btn">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Login to continue
+        </a>
+      </div>
+      {{end}}
+    </div>
+
+  </div><!-- end #view-create -->
+
+</div><!-- end .sup-wrap -->
+
+<script>
+(function(){
+  var initialView = '{{.View}}';
+
+  function navTo(view) {
+    var views = ['main','tickets','create'];
+    views.forEach(function(v){ document.getElementById('view-'+v).style.display='none'; });
+    document.getElementById('view-'+view).style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+    // update URL without reload
+    var url = '/support';
+    if (view !== 'main') url += '?view=' + view;
+    history.pushState({view:view}, '', url);
+  }
+
+  window.navTo = navTo;
+
+  // initial display
+  navTo(initialView || 'main');
+
+  // handle browser back/forward
+  window.addEventListener('popstate', function(e){
+    var v = (e.state && e.state.view) || 'main';
+    var views = ['main','tickets','create'];
+    views.forEach(function(n){ document.getElementById('view-'+n).style.display='none'; });
+    document.getElementById('view-'+v).style.display='block';
+  });
+
+  // ticket search
+  window.filterTickets = function() {
+    var q = document.getElementById('tixSearch').value.toLowerCase();
+    var rows = document.querySelectorAll('#tixList .ticket-row');
+    var visible = 0;
+    rows.forEach(function(row){
+      var text = (row.dataset.title + ' ' + row.dataset.cat).toLowerCase();
+      var show = !q || text.indexOf(q) !== -1;
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    var emptyEl = document.getElementById('tixEmpty');
+    if (emptyEl) emptyEl.style.display = (rows.length > 0 && visible === 0) ? 'block' : 'none';
+  };
+})();
+</script>
+{{end}}

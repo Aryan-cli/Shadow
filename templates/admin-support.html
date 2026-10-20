@@ -1,0 +1,66 @@
+{{define "admin-title"}}Support Tickets{{end}}
+{{define "admin-content"}}
+<div class="page-header">
+  <h1>Support Tickets</h1>
+  <p>Manage and respond to user support requests.</p>
+</div>
+
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+  <div style="display:flex;gap:0.5rem;">
+    <a href="?status=open" class="btn {{if eq .Filter "open"}}btn-primary{{else}}btn-ghost{{end}} btn-sm">
+      Open {{if eq .Filter "open"}}({{len .Tickets}}){{end}}
+    </a>
+    <a href="?status=closed" class="btn {{if eq .Filter "closed"}}btn-primary{{else}}btn-ghost{{end}} btn-sm">Closed</a>
+    <a href="?status=all" class="btn {{if eq .Filter "all"}}btn-primary{{else}}btn-ghost{{end}} btn-sm">All</a>
+  </div>
+  {{if gt .OpenCount 0}}
+  <span class="badge badge-yellow">{{.OpenCount}} open ticket{{if gt .OpenCount 1}}s{{end}}</span>
+  {{end}}
+</div>
+
+<div class="card">
+  {{if not .Tickets}}
+  <div style="text-align:center;padding:3rem 1rem;color:var(--text-dim);">
+    <svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--text-dimmer);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:1rem;display:block;margin-left:auto;margin-right:auto;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    No {{.Filter}} tickets found.
+  </div>
+  {{else}}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Title</th>
+          <th>User</th>
+          <th>Category</th>
+          <th>Replies</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Tickets}}
+        <tr>
+          <td><a href="{{$.AdminPath}}/support/{{.ID}}" class="row-link" style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;">#{{.ID}}</a></td>
+          <td><a href="{{$.AdminPath}}/support/{{.ID}}" class="row-link" style="font-weight:600;">{{truncate .Title 60}}</a></td>
+          <td style="font-size:0.85rem;color:var(--text-dim);">{{.DisplayName}}</td>
+          <td><span class="badge badge-dim" style="font-size:0.72rem;">{{.Category}}</span></td>
+          <td style="font-size:0.85rem;text-align:center;">{{.ReplyCount}}</td>
+          <td>
+            {{if eq .Status "open"}}
+            <span class="badge badge-green">Open</span>
+            {{else}}
+            <span class="badge badge-dim">Closed</span>
+            {{end}}
+          </td>
+          <td style="font-size:0.8rem;color:var(--text-dim);white-space:nowrap;">{{.CreatedAt.Format "Jan 2, 15:04"}}</td>
+          <td style="font-size:0.8rem;color:var(--text-dim);white-space:nowrap;">{{.UpdatedAt.Format "Jan 2, 15:04"}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{end}}
+</div>
+{{end}}

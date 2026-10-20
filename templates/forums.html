@@ -1,0 +1,1399 @@
+{{define "title"}}Shadow — Forums{{end}}
+
+{{define "content"}}
+<style>
+  /* ===== FORUMS PAGE STYLES ===== */
+  :root { --left-panel-bg: #0c0c0e; }
+  html[data-theme="light"] { --left-panel-bg: #e8e7e5; }
+
+  footer { margin-left: 68px; }
+  @media (max-width: 760px) { footer { margin-left: 0; } }
+
+  .left-panel {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 68px; z-index: 40;
+    display: flex; flex-direction: column; align-items: center;
+    padding-top: 96px; padding-bottom: 24px;
+    background: var(--left-panel-bg); border-right: 1px solid var(--line);
+    transition: background 0.35s ease; overflow-y: auto; scrollbar-width: none;
+  }
+  .left-panel::-webkit-scrollbar { display: none; }
+
+  .left-panel-divider { width: 32px; height: 1px; background: var(--line); margin: 10px 0; flex-shrink: 0; }
+
+  .community-icon {
+    position: relative; width: 42px; height: 42px; border-radius: 50%;
+    background: var(--surface-2); border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; cursor: pointer; margin-bottom: 8px;
+    transition: border-radius 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.78rem; font-weight: 700;
+    color: var(--text-dim); user-select: none; text-decoration: none;
+  }
+  .community-icon:hover { border-radius: 14px; border-color: var(--text-dimmer); background: var(--surface); color: var(--text); }
+  .community-icon.active { border-radius: 14px; background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+  .community-icon::before {
+    content: ''; position: absolute; left: -13px; top: 50%;
+    transform: translateY(-50%) scaleY(0); width: 4px; height: 20px;
+    border-radius: 0 3px 3px 0; background: var(--text);
+    transition: transform 0.2s ease, height 0.2s ease;
+  }
+  .community-icon:hover::before { transform: translateY(-50%) scaleY(1); height: 10px; }
+  .community-icon.active::before { transform: translateY(-50%) scaleY(1); height: 20px; background: var(--accent); }
+  .community-icon .tip {
+    position: absolute; left: calc(100% + 14px); top: 50%;
+    background: var(--dropdown-bg); border: 1px solid var(--nav-border); border-radius: 8px;
+    padding: 6px 12px; font-family: 'Space Grotesk', sans-serif; font-size: 0.82rem;
+    font-weight: 600; color: var(--text); white-space: nowrap; pointer-events: none;
+    opacity: 0; transform: translateY(-50%) translateX(-4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3); z-index: 100;
+  }
+  .community-icon .tip::before {
+    content: ''; position: absolute; right: 100%; top: 50%; transform: translateY(-50%);
+    border: 5px solid transparent; border-right-color: var(--nav-border);
+  }
+  .community-icon:hover .tip { opacity: 1; transform: translateY(-50%) translateX(0); }
+  .community-icon .badge {
+    position: absolute; bottom: -2px; right: -2px; min-width: 16px; height: 16px;
+    border-radius: 8px; background: #E05555; border: 2px solid var(--bg);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; font-weight: 700;
+    color: #fff; display: flex; align-items: center; justify-content: center; padding: 0 3px;
+    transition: border-color 0.35s ease;
+  }
+  .community-icon.add-btn { border-style: dashed; color: var(--text-dimmer); font-size: 1.2rem; font-weight: 400; }
+  .community-icon.add-btn:hover { color: var(--text-dim); border-style: solid; }
+  .lp-user-icon, .lp-user-icon:hover, .lp-user-icon.active { border-radius: 50% !important; overflow: hidden; }
+
+  .page-wrap { margin-left: 68px; display: flex; min-height: 100vh; }
+
+  .page {
+    position: relative; z-index: 1; flex: 1; max-width: 1400px;
+    padding: 108px 32px 80px;
+    display: grid; grid-template-columns: 1fr 300px; grid-template-rows: auto auto auto auto 1fr;
+    column-gap: 32px;
+    grid-template-areas: "head head" "search sidebar" "chips sidebar" "compose sidebar" "feed sidebar";
+  }
+
+  .page-head {
+    grid-area: head; display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 22px; flex-wrap: wrap; gap: 10px;
+  }
+  .page-head h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
+  .page-head .meta { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-dimmer); }
+
+  .search-bar {
+    grid-area: search; display: flex; align-items: center; gap: 10px;
+    padding: 11px 16px; border: 1px solid var(--line); border-radius: 12px;
+    background: var(--surface); margin-bottom: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .search-bar:focus-within { border-color: var(--text-dimmer); box-shadow: 0 0 0 3px rgba(255,255,255,0.04); }
+  html[data-theme="light"] .search-bar:focus-within { box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
+  .search-bar svg { width: 15px; height: 15px; stroke: var(--text-dimmer); fill: none; stroke-width: 1.8; flex-shrink: 0; transition: stroke 0.2s; }
+  .search-bar:focus-within svg { stroke: var(--text-dim); }
+  .search-bar input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 0.86rem; }
+  .search-bar input::placeholder { color: var(--text-dimmer); font-family: 'JetBrains Mono', monospace; }
+  .search-hint { flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-dimmer); border: 1px solid var(--line); border-radius: 5px; padding: 2px 7px; transition: opacity 0.2s; }
+  .search-bar:focus-within .search-hint { opacity: 0; }
+  .search-filter-sel { flex-shrink: 0; background: none; border: none; border-left: 1px solid var(--line); padding: 0 10px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; outline: none; cursor: pointer; height: 100%; }
+  .search-filter-sel option { background: var(--dropdown-bg); color: var(--text); }
+  .search-dropdown {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 150;
+    background: var(--dropdown-bg); border: 1px solid var(--nav-border); border-radius: 14px;
+    overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  }
+  .sd-item { display: flex; align-items: center; gap: 12px; padding: 11px 16px; text-decoration: none; cursor: pointer; transition: background 0.15s; }
+  .sd-item:hover { background: var(--surface); }
+  .sd-icon { width: 32px; height: 32px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 0.72rem; font-weight: 700; color: var(--text-dim); flex-shrink: 0; }
+  .sd-avatar { border-radius: 50%; background: color-mix(in srgb, var(--accent) 15%, var(--surface-2)); border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); color: var(--accent); }
+  .sd-name { font-size: 0.88rem; color: var(--text); }
+  .sd-sub { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-dimmer); margin-top: 1px; }
+  .sd-type { flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--text-dimmer); padding: 2px 7px; border: 1px solid var(--line); border-radius: 5px; }
+  .sd-empty { padding: 14px 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-dimmer); text-align: center; }
+
+  .chips { grid-area: chips; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 16px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex-shrink: 0; padding: 7px 15px; border-radius: 100px; border: 1px solid var(--line); font-size: 0.8rem; color: var(--text-dim); white-space: nowrap; cursor: pointer; text-decoration: none; transition: border-color 0.2s, color 0.2s, background 0.2s; }
+  .chip:hover { color: var(--text); border-color: var(--text-dimmer); }
+  .chip.active { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+  .chip-new { font-size: 0.78rem; padding: 7px 12px; }
+
+  .compose {
+    grid-area: compose; display: flex; align-items: center; gap: 12px;
+    padding: 10px 10px 10px 18px; border: 1px solid var(--line); border-radius: 100px;
+    background: var(--surface); margin-bottom: 16px; cursor: pointer;
+  }
+  .compose input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.88rem; cursor: pointer; }
+  .compose input::placeholder { color: var(--text-dimmer); }
+  .compose-btn { padding: 8px 18px; border-radius: 100px; background: var(--accent); color: var(--accent-contrast); font-size: 0.82rem; font-weight: 600; border: none; transition: opacity 0.2s ease; white-space: nowrap; }
+  .compose-btn:hover { opacity: 0.82; }
+
+  .feed { grid-area: feed; display: flex; flex-direction: column; gap: 10px; }
+
+  .post { display: flex; gap: 14px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); transition: border-color 0.2s ease; }
+  .post:hover { border-color: var(--text-dimmer); }
+
+  .vote { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; width: 32px; }
+  .vote button { width: 24px; height: 24px; border-radius: 7px; border: 1px solid var(--line); background: none; color: var(--text-dim); display: flex; align-items: center; justify-content: center; transition: border-color 0.2s, color 0.2s, background 0.2s; }
+  .vote button:hover { border-color: var(--up); color: var(--up); }
+  .vote button.voted-up { border-color: var(--up); color: var(--up); background: rgba(111,224,160,0.08); }
+  .vote button.voted-down { border-color: #E05555; color: #E05555; background: rgba(224,85,85,0.08); }
+  .vote button svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+  .vote .count { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 500; color: var(--up); }
+  .vote .count.negative { color: #E05555; }
+
+  .post-body { flex: 1; min-width: 0; }
+  .post-meta { display: flex; align-items: center; gap: 7px; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-dimmer); margin-bottom: 7px; flex-wrap: wrap; }
+  .tag { padding: 2px 8px; border-radius: 100px; border: 1px solid var(--line); color: var(--text-dim); text-decoration: none; transition: border-color 0.2s, color 0.2s; }
+  .tag:hover { color: var(--text); border-color: var(--text-dimmer); }
+  .hashtag { color: var(--text-dimmer); text-decoration: none; }
+  .hashtag:hover { color: var(--text-dim); }
+  .post h3 { font-family: 'Space Grotesk', sans-serif; font-size: 0.98rem; font-weight: 600; margin-bottom: 5px; line-height: 1.35; }
+  .post h3 a { color: inherit; text-decoration: none; }
+  .post h3 a:hover { opacity: 0.85; }
+  .post-excerpt { color: var(--text-dim); font-size: 0.86rem; margin-bottom: 11px; }
+  .post-footer { display: flex; align-items: center; gap: 16px; font-size: 0.76rem; color: var(--text-dimmer); }
+  .post-footer a, .post-footer span { display: flex; align-items: center; gap: 5px; transition: color 0.2s; text-decoration: none; color: var(--text-dimmer); }
+  .post-footer a:hover, .post-footer span:hover { color: var(--text-dim); cursor: pointer; }
+  .post-footer svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+
+  .load-more-wrap { text-align: center; padding: 16px 0; }
+  .load-more-btn { padding: 9px 24px; border-radius: 100px; border: 1px solid var(--line); background: var(--surface); color: var(--text-dim); font-size: 0.84rem; cursor: pointer; text-decoration: none; transition: border-color 0.2s, color 0.2s; }
+  .load-more-btn:hover { border-color: var(--text-dimmer); color: var(--text); }
+
+  .sidebar { grid-area: sidebar; display: flex; flex-direction: column; gap: 14px; }
+  .side-card { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; }
+  .side-card-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+  .side-card-head .title { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-dimmer); letter-spacing: 0.06em; }
+  .side-card-head .live { display: flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; color: var(--up); }
+  .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--up); animation: livepulse 1.8s infinite; }
+  @keyframes livepulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+  .side-card-body { padding: 14px 16px; }
+  .community-list { display: flex; flex-direction: column; gap: 10px; }
+  .community-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.86rem; }
+  .community-row .cname { display: flex; align-items: center; gap: 8px; }
+  .community-row .cnum { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 1.2rem; width: 26px; text-align: center; color: var(--text-dimmer); flex-shrink: 0; }
+  .community-row .cdot { width: 7px; height: 7px; border-radius: 50%; background: var(--line); flex-shrink: 0; }
+  .community-row .clabel { color: var(--text-dim); }
+  .community-row .cposts { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-dimmer); }
+  .online-list { display: flex; flex-direction: column; gap: 8px; }
+  .online-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.84rem; }
+  .online-row .u { display: flex; align-items: center; gap: 8px; }
+  .mini-avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg,#555560,#1e1e24); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 0.58rem; font-weight: 600; color: #fff; flex-shrink: 0; position: relative; }
+  .mini-avatar.active::after { content: ''; position: absolute; bottom: -1px; right: -1px; width: 6px; height: 6px; border-radius: 50%; background: #3FFF8D; border: 1.5px solid var(--bg); }
+  .online-row .u-name { color: var(--text-dim); }
+  .online-row .u-time { font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; color: var(--text-dimmer); }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); }
+  .stat .sv { font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; font-weight: 600; margin-bottom: 2px; }
+  .stat .sk { font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; color: var(--text-dimmer); }
+
+  /* ===== CREATE POST MODAL ===== */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--bg); border: 1px solid var(--nav-border); border-radius: 20px;
+    width: 100%; max-width: 560px; padding: 28px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+    animation: modalIn 0.2s ease;
+  }
+  @keyframes modalIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .modal-header h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 600; }
+  .modal-close { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+  .modal-close:hover { border-color: var(--text-dimmer); color: var(--text); }
+  .modal-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .form-field { margin-bottom: 16px; }
+  .form-field label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-dimmer); letter-spacing: 0.06em; margin-bottom: 8px; }
+  .form-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 11px 14px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.9rem;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-input:focus { border-color: var(--text-dimmer); box-shadow: 0 0 0 3px rgba(255,255,255,0.04); }
+  html[data-theme="light"] .form-input:focus { box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
+  .form-input::placeholder { color: var(--text-dimmer); }
+  textarea.form-input { resize: vertical; min-height: 100px; font-family: 'Inter', sans-serif; line-height: 1.5; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+  .btn-cancel { padding: 9px 20px; border-radius: 100px; border: 1px solid var(--line); background: none; color: var(--text-dim); font-size: 0.86rem; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+  .btn-cancel:hover { border-color: var(--text-dimmer); color: var(--text); }
+  .btn-submit { padding: 9px 22px; border-radius: 100px; background: var(--accent); color: var(--accent-contrast); border: 1px solid var(--accent); font-size: 0.86rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+  .btn-submit:hover { opacity: 0.85; }
+
+  /* CREATE SERVER MODAL */
+  .server-modal-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .server-modal-backdrop.open { display: flex; }
+
+  /* Explore drawer */
+  .explore-drawer {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    align-items: flex-start; justify-content: flex-start;
+  }
+  .explore-drawer.open { display: flex; }
+  .explore-panel {
+    background: var(--bg); border-right: 1px solid var(--nav-border);
+    width: 320px; height: 100%; padding: 80px 20px 24px; overflow-y: auto;
+    animation: slideInLeft 0.25s ease;
+  }
+  @keyframes slideInLeft { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .explore-panel h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+  .explore-panel .ep-sub { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-dimmer); margin-bottom: 20px; }
+  .server-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .server-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); transition: border-color 0.2s; }
+  .server-item:hover { border-color: var(--text-dimmer); }
+  .server-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 0.72rem; font-weight: 700; color: var(--text-dim); flex-shrink: 0; }
+  .server-info { flex: 1; min-width: 0; }
+  .server-name { font-size: 0.86rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .server-desc { font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; color: var(--text-dimmer); }
+  .follow-btn { flex-shrink: 0; padding: 5px 14px; border-radius: 100px; border: 1px solid var(--line); background: none; color: var(--text-dim); font-size: 0.78rem; cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s; white-space: nowrap; }
+  .follow-btn:hover { border-color: var(--text-dimmer); color: var(--text); }
+  .follow-btn.following { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+  .explore-divider { height: 1px; background: var(--line); margin: 16px 0; }
+  .explore-section-title { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-dimmer); letter-spacing: 0.06em; margin-bottom: 12px; }
+
+  /* drawer overlay */
+  .drawer-overlay {
+    display: none; position: fixed; inset: 0; z-index: 55;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none; transition: opacity 0.28s ease;
+  }
+  .drawer-overlay.active { opacity: 1; pointer-events: auto; }
+
+  .fab-communities {
+    position: fixed; bottom: 28px; left: 16px; z-index: 45;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--accent); color: var(--accent-contrast); border: none;
+    display: none; align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.45); cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .fab-communities:hover { transform: scale(1.08); }
+  .fab-communities:active { transform: scale(0.94); }
+  .fab-communities svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* empty state */
+  .feed-empty { padding: 48px 24px; text-align: center; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+  .feed-empty p { color: var(--text-dim); font-size: 0.9rem; }
+
+  @media (max-width: 760px) {
+    .left-panel { display: flex; width: 68px; padding-top: 90px; align-items: center; transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow: none; z-index: 60; }
+    .left-panel.drawer-open { transform: translateX(0); background: #0c0c0e; box-shadow: 6px 0 40px rgba(0,0,0,0.6); }
+    html[data-theme="light"] .left-panel.drawer-open { background: #e8e7e5; }
+    .page-wrap { margin-left: 0; }
+    .page { grid-template-columns: 1fr; grid-template-areas: "head" "search" "chips" "compose" "feed"; padding-top: 100px; }
+    .sidebar { display: none; }
+    .drawer-overlay { display: block; }
+    .fab-communities { display: flex !important; }
+  }
+  @media (max-width: 360px) { .user-name { display: none; } }
+
+  /* ===== FILTER PANEL ===== */
+  .filter-toggle-btn {
+    position: relative; flex-shrink: 0; width: 32px; height: 32px; border-radius: 9px;
+    border: 1px solid var(--line); background: none; color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .filter-toggle-btn:hover, .filter-toggle-btn.active { border-color: var(--text-dimmer); color: var(--text); background: var(--surface-2); }
+  .filter-toggle-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .filter-badge {
+    position: absolute; top: -5px; right: -5px; min-width: 14px; height: 14px;
+    border-radius: 7px; background: var(--accent); border: 1.5px solid var(--bg);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.56rem; font-weight: 700;
+    color: var(--accent-contrast); display: flex; align-items: center; justify-content: center; padding: 0 2px;
+  }
+  .filter-panel {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 140;
+    background: var(--dropdown-bg); border: 1px solid var(--nav-border); border-radius: 16px;
+    padding: 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    animation: fpanelIn 0.15s ease;
+  }
+  @keyframes fpanelIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .fp-section { margin-bottom: 14px; }
+  .fp-section:last-child { margin-bottom: 0; }
+  .fp-label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; color: var(--text-dimmer); letter-spacing: 0.07em; margin-bottom: 7px; }
+  .fp-seg { display: flex; gap: 4px; flex-wrap: wrap; }
+  .fpseg-btn {
+    padding: 5px 13px; border-radius: 100px; border: 1px solid var(--line);
+    background: none; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.74rem;
+    cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s; white-space: nowrap;
+  }
+  .fpseg-btn.active { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+  .fpseg-btn:hover:not(.active) { border-color: var(--text-dimmer); color: var(--text); }
+  .fp-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .fpchip-btn {
+    padding: 4px 11px; border-radius: 100px; border: 1px solid var(--line);
+    background: none; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+    cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s; white-space: nowrap;
+  }
+  .fpchip-btn.active { background: var(--surface-2); color: var(--text); border-color: var(--text-dimmer); }
+  .fpchip-btn:hover:not(.active) { border-color: var(--text-dimmer); color: var(--text); }
+  .fp-tag-wrap { display: flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); transition: border-color 0.2s; }
+  .fp-tag-wrap:focus-within { border-color: var(--text-dimmer); }
+  .fp-tag-hash { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-dimmer); }
+  .fp-tag-inp { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; }
+  .fp-tag-inp::placeholder { color: var(--text-dimmer); }
+  .fp-divider { height: 1px; background: var(--line); margin: 14px 0; }
+  .filter-active-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .filter-pill {
+    display: flex; align-items: center; gap: 5px; padding: 3px 10px 3px 9px;
+    border-radius: 100px; border: 1px solid var(--accent);
+    background: rgba(111,224,160,0.07); font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; color: var(--accent); cursor: default;
+  }
+  html[data-theme="light"] .filter-pill { background: rgba(0,180,100,0.07); }
+  .filter-pill-x { cursor: pointer; opacity: 0.7; line-height: 1; font-size: 0.8rem; }
+  .filter-pill-x:hover { opacity: 1; }
+
+  /* ===== SERVER MINI HEADER ===== */
+  .server-mini-hdr {
+    display: none; align-items: center; gap: 12px;
+    padding: 14px 18px; border: 1px solid var(--line); border-radius: 14px;
+    background: var(--surface); margin-bottom: 10px;
+  }
+  .smh-icon { width: 42px; height: 42px; border-radius: 13px; background: var(--surface-2); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--text-dim); flex-shrink: 0; }
+  .smh-info { flex: 1; min-width: 0; }
+  .smh-name { font-size: 0.95rem; font-weight: 600; font-family: 'Space Grotesk', sans-serif; }
+  .smh-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-dimmer); margin-top: 2px; }
+  .smh-close { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+  .smh-close:hover { border-color: var(--text-dimmer); color: var(--text); }
+  .smh-close svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* ===== SEARCH DROPDOWN SECTIONS ===== */
+  .sd-section-label { padding: 8px 16px 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.63rem; color: var(--text-dimmer); letter-spacing: 0.07em; }
+  .sd-suggestion { display: flex; align-items: center; gap: 10px; padding: 9px 16px; text-decoration: none; cursor: pointer; transition: background 0.12s; }
+  .sd-suggestion:hover { background: var(--surface); }
+  .sd-sugg-icon { width: 24px; height: 24px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-dimmer); }
+  .sd-sugg-icon svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .sd-sugg-text { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--text); }
+  .sd-sugg-text b { color: var(--text); }
+  .sd-divider { height: 1px; background: var(--line); margin: 4px 0; }
+
+  /* feed loading skeleton */
+  .feed-skeleton { display: flex; flex-direction: column; gap: 10px; }
+  .feed-skel-item { height: 90px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); position: relative; overflow: hidden; }
+  .feed-skel-item::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent); animation: skelShimmer 1.4s infinite; }
+  @keyframes skelShimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+</style>
+
+<!-- DRAWER OVERLAY (mobile) -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<!-- FAB — mobile communities button -->
+<button class="fab-communities" id="fabCommunities" aria-label="Open communities">
+  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+</button>
+
+<!-- LEFT PANEL -->
+<div class="left-panel" id="leftPanel">
+  <a href="/forums" class="community-icon{{if not .ActiveCat}}{{if not .ActiveServer}} active{{end}}{{end}}" title="">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+    <span class="tip">All Forums</span>
+  </a>
+  <div class="left-panel-divider"></div>
+  {{range .FollowedSrvs}}
+  <a href="/forums/server/{{.PublicID}}" class="community-icon" data-slug="{{.Slug}}" data-name="{{.Name}}" data-initials="{{.Initials}}" onclick="handleServerClick(event,this)">
+    {{if .LogoURL}}<img src="{{.LogoURL}}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">{{else}}{{.Initials}}{{end}}
+    <span class="tip">{{.Name}}</span>
+  </a>
+  {{end}}
+  {{if .FollowedSrvs}}<div class="left-panel-divider"></div>{{end}}
+  {{if .FollowedUsers}}
+  {{range .FollowedUsers}}
+  <a href="/forums/u/{{.Username}}" class="community-icon lp-user-icon" title="@{{.Username}}">
+    {{if .AvatarPath}}<img src="/{{.AvatarPath}}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+    {{else}}{{if ge (len .Username) 2}}{{slice .Username 0 2 | upper}}{{else}}{{upper .Username}}{{end}}{{end}}
+    <span class="tip">@{{.Username}}</span>
+  </a>
+  {{end}}
+  <div class="left-panel-divider"></div>
+  {{end}}
+  <button class="community-icon add-btn" id="exploreBtn" type="button">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    <span class="tip">Explore / Create Server</span>
+  </button>
+</div>
+
+<!-- PAGE -->
+<div class="page-wrap">
+<div class="page">
+
+  <div class="page-head">
+    <h1 id="pageTitle">{{if .ActiveServer}}Server Forum{{else if .ActiveCat}}{{.ActiveCat}}{{else}}Forums{{end}}</h1>
+    <span class="meta">{{.Stats.TotalPosts}} posts · sorted by time · no algorithm</span>
+  </div>
+
+  <!-- SEARCH -->
+  <div style="grid-area:search;margin-bottom:12px;position:relative;" id="searchWrap">
+    <form method="GET" action="/forums" id="searchForm">
+      <input type="hidden" name="cat" id="hiddenCat" value="{{.ActiveCat}}">
+      <input type="hidden" name="sort" id="hiddenSort" value="">
+      <input type="hidden" name="date" id="hiddenDate" value="">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="forumSearch" name="q" value="{{.SearchQuery}}" placeholder="search posts, @server, #tag..." autocomplete="off" spellcheck="false">
+        <button type="button" id="filterToggle" class="filter-toggle-btn" title="Filters" aria-label="Toggle filters">
+          <svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          <span class="filter-badge" id="filterBadge" style="display:none">0</span>
+        </button>
+      </div>
+    </form>
+    <!-- live search dropdown -->
+    <div id="searchDropdown" class="search-dropdown" style="display:none;"></div>
+    <!-- filter panel -->
+    <div id="filterPanel" class="filter-panel" style="display:none;">
+      <div class="fp-section">
+        <span class="fp-label">SORT BY</span>
+        <div class="fp-seg" id="fpSort">
+          <button class="fpseg-btn active" data-val="">Newest</button>
+          <button class="fpseg-btn" data-val="top">Top rated</button>
+          <button class="fpseg-btn" data-val="hot">Most discussed</button>
+        </div>
+      </div>
+      <div class="fp-divider"></div>
+      <div class="fp-section">
+        <span class="fp-label">TIME PERIOD</span>
+        <div class="fp-chips" id="fpDate">
+          <button class="fpchip-btn active" data-val="">All time</button>
+          <button class="fpchip-btn" data-val="today">Today</button>
+          <button class="fpchip-btn" data-val="week">This week</button>
+          <button class="fpchip-btn" data-val="month">This month</button>
+          <button class="fpchip-btn" data-val="year">This year</button>
+        </div>
+      </div>
+      <div class="fp-divider"></div>
+      <div class="fp-section">
+        <span class="fp-label"># FILTER BY HASHTAG</span>
+        <div class="fp-tag-wrap">
+          <span class="fp-tag-hash">#</span>
+          <input type="text" id="fpTagInput" class="fp-tag-inp" placeholder="type a hashtag..." autocomplete="off">
+        </div>
+      </div>
+      <div class="fp-divider"></div>
+      <div class="fp-section">
+        <span class="fp-label">SEARCH IN</span>
+        <div class="fp-chips" id="fpType">
+          <button class="fpchip-btn active" data-val="">Posts</button>
+          <button class="fpchip-btn" data-val="servers">Servers</button>
+          <button class="fpchip-btn" data-val="users">Users</button>
+        </div>
+      </div>
+    </div>
+    <!-- active filter pills (inside search wrapper so it pushes chips down naturally) -->
+    <div class="filter-active-bar" id="filterActiveBar" style="margin-top:8px;display:none;"></div>
+  </div>
+
+  <!-- CATEGORY CHIPS -->
+  <div class="chips">
+    <a href="/forums" class="chip{{if not .ActiveCat}} active{{end}}" data-cat="" onclick="handleCatClick(event,this,'','All Forums')">All</a>
+    {{range .Categories}}
+    <a href="/forums?cat={{.Slug}}" class="chip{{if eq $.ActiveCat .Slug}} active{{end}}" data-cat="{{.Slug}}" data-name="{{.Name}}" onclick="handleCatClick(event,this,'{{.Slug}}','{{.Name}}')">{{.Name}}</a>
+    {{end}}
+    <button class="chip chip-new" id="newCatBtn" type="button">+ New category</button>
+  </div>
+
+  <!-- COMPOSE -->
+  {{if .Session}}
+  <div class="compose" id="composeBar">
+    <input type="text" id="composeInput" placeholder="Start a discussion..." readonly>
+    <button class="compose-btn" type="button" id="openPostModal">Post</button>
+  </div>
+  {{else}}
+  <div class="compose" style="cursor:default;margin-bottom:16px;">
+    <span style="color:var(--text-dimmer);font-size:0.88rem;flex:1;"><a href="/login" style="color:var(--text-dim);">Log in</a> to start a discussion</span>
+  </div>
+  {{end}}
+
+  <!-- SERVER MINI HEADER (hidden - server clicks now navigate directly) -->
+  <div class="server-mini-hdr" id="serverMiniHdr" style="display:none!important;">
+    <div class="smh-icon" id="smhIcon"></div>
+    <div class="smh-info">
+      <div class="smh-name" id="smhName"></div>
+      <div class="smh-meta" id="smhMeta"></div>
+    </div>
+    <a id="smhLink" href="#" class="follow-btn" style="text-decoration:none;"></a>
+    <button class="smh-close" onclick="clearServerFilter()" title="Back to all forums">
+      <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <!-- FEED -->
+  <div class="feed" id="postFeed">
+    {{if not .Posts}}
+    <div class="feed-empty">
+      <p>No posts yet{{if .ActiveCat}} in this category{{end}}. Be the first to post!</p>
+    </div>
+    {{end}}
+    {{range .Posts}}
+    <div class="post" data-post-id="{{.ID}}">
+      <div class="vote">
+        <button class="vote-up{{if eq .UserVote 1}} voted-up{{end}}" aria-label="Upvote" onclick="castVote({{.ID}},1,this)">
+          <svg viewBox="0 0 24 24"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg>
+        </button>
+        <span class="count{{if lt .Score 0}} negative{{end}}" id="score-{{.ID}}">{{.Score}}</span>
+        <button class="vote-down{{if eq .UserVote -1}} voted-down{{end}}" aria-label="Downvote" onclick="castVote({{.ID}},-1,this)">
+          <svg viewBox="0 0 24 24"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg>
+        </button>
+      </div>
+      <div class="post-body">
+        <div class="post-meta">
+          {{if .CategoryName}}<a href="/forums?cat={{.CategorySlug}}" class="tag">{{.CategoryName}}</a>{{end}}
+          {{if .ServerSlug}}<a href="/forums/server/{{.ServerSlug}}" class="tag" style="border-color:var(--accent);color:var(--accent);">{{.ServerName}}</a>{{end}}
+          <span>{{.AuthorName}}</span><span>·</span><span>{{call $.TimeAgo .CreatedAt}}</span>
+          {{range .Hashtags}}<a href="/forums?tag={{.}}" class="hashtag">#{{.}}</a>{{end}}
+        </div>
+        <h3><a href="/forums/post/{{.ID}}">{{.Title}}</a></h3>
+        {{if .Body}}<p class="post-excerpt">{{if gt (len .Body) 160}}{{slice .Body 0 160}}…{{else}}{{.Body}}{{end}}</p>{{end}}
+        {{if .ImageURL}}<img src="{{.ImageURL}}" alt="" style="max-width:100%;max-height:220px;border-radius:10px;border:1px solid var(--line);margin-bottom:10px;object-fit:cover;" loading="lazy">{{end}}
+        <div class="post-footer">
+          <a href="/forums/post/{{.ID}}#comments">
+            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-1.1 4.2L21 20l-4.3-1.1a8.5 8.5 0 1 1 4.3-7.4z"/></svg>
+            {{.CommentCount}} {{if eq .CommentCount 1}}reply{{else}}replies{{end}}
+          </a>
+          <span onclick="copyLink('/forums/post/{{.ID}}')">
+            <svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v14"/></svg>
+            Share
+          </span>
+        </div>
+      </div>
+    </div>
+    {{end}}
+
+    {{if .HasMore}}
+    <div class="load-more-wrap">
+      <a href="/forums?{{if .ActiveCat}}cat={{.ActiveCat}}&{{end}}{{if .ActiveHashtag}}tag={{.ActiveHashtag}}&{{end}}{{if .SearchQuery}}q={{.SearchQuery}}&{{end}}page={{add1 .CurrentPage}}" class="load-more-btn">Load more posts</a>
+    </div>
+    {{end}}
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-card">
+      <div class="side-card-head"><span class="title">FORUM.STATS</span></div>
+      <div class="side-card-body">
+        <div class="stat-grid">
+          <div class="stat"><div class="sv">{{.Stats.TotalPosts}}</div><div class="sk">posts</div></div>
+          <div class="stat"><div class="sv">{{.Stats.TotalMembers}}</div><div class="sk">members</div></div>
+          <div class="stat"><div class="sv">{{.Stats.OnlineNow}}</div><div class="sk">online now</div></div>
+          <div class="stat"><div class="sv">{{.Stats.TotalCategories}}</div><div class="sk">categories</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <div class="side-card-head"><span class="title">TOP CATEGORIES</span></div>
+      <div class="side-card-body">
+        <div class="community-list">
+          {{range $i, $c := .TopCategories}}
+          <div class="community-row">
+            <div class="cname">
+              <span class="cnum">0{{add1 $i}}</span>
+              <span class="cdot"></span>
+              <a href="/forums?cat={{$c.Slug}}" class="clabel" style="text-decoration:none;color:var(--text-dim);">{{$c.Name}}</a>
+            </div>
+            <span class="cposts">{{$c.PostCount}} posts</span>
+          </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+
+    {{if .OnlineUsers}}
+    <div class="side-card">
+      <div class="side-card-head">
+        <span class="title">ONLINE NOW</span>
+        <span class="live"><span class="live-dot"></span>{{.Stats.OnlineNow}} active</span>
+      </div>
+      <div class="side-card-body">
+        <div class="online-list">
+          {{range .OnlineUsers}}
+          <div class="online-row">
+            <div class="u">
+              <div class="mini-avatar active">{{.Initials}}</div>
+              <span class="u-name">{{.Username}}</span>
+            </div>
+            <span class="u-time">{{if eq .MinutesAgo 0}}now{{else}}{{.MinutesAgo}}m{{end}}</span>
+          </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+    {{end}}
+
+    {{if .Hashtags}}
+    <div class="side-card">
+      <div class="side-card-head"><span class="title">TRENDING TAGS</span></div>
+      <div class="side-card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          {{range .Hashtags}}
+          <a href="/forums?tag={{.Name}}" class="tag" style="font-size:0.76rem;">#{{.Name}} <span style="color:var(--text-dimmer);font-family:'JetBrains Mono',monospace;font-size:0.65rem;">{{.PostCount}}</span></a>
+          {{end}}
+        </div>
+      </div>
+    </div>
+    {{end}}
+  </aside>
+
+</div>
+</div>
+
+<!-- CREATE POST MODAL -->
+<div class="modal-backdrop" id="postModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-header">
+      <h2 id="modalTitle">New Post</h2>
+      <button class="modal-close" id="closePostModal" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form method="POST" action="/forums/post" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <div class="form-field">
+        <label for="postTitle">TITLE *</label>
+        <input type="text" id="postTitle" name="title" class="form-input" placeholder="What's your discussion about?" required maxlength="200" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label for="postBody">BODY (optional)</label>
+        <textarea id="postBody" name="body" class="form-input" placeholder="Share your thoughts, links, or details... Use #hashtag in your post to tag it."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="postCategory">CATEGORY</label>
+          <select id="postCategory" name="category" class="form-input">
+            <option value="">— none —</option>
+            {{range .Categories}}
+            <option value="{{.Slug}}"{{if eq $.ActiveCat .Slug}} selected{{end}}>{{.Name}}</option>
+            {{end}}
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="postHashtags">HASHTAGS</label>
+          <input type="text" id="postHashtags" name="hashtags" class="form-input" placeholder="pgp, opsec, tools" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-field">
+        <label for="postImage">IMAGE (optional)</label>
+        <input type="file" id="postImage" name="image" accept="image/*" class="form-input" style="padding:8px 12px;">
+        <div id="imgPreview" style="margin-top:8px;display:none;"><img id="imgPreviewEl" style="max-width:100%;max-height:160px;border-radius:8px;border:1px solid var(--line);" alt="preview"></div>
+      </div>
+      {{if .Servers}}
+      <div class="form-field">
+        <label for="postServer">POST TO SERVER (optional)</label>
+        <select id="postServer" name="server_id" class="form-input">
+          <option value="">— independent post —</option>
+          {{range .Servers}}
+          <option value="{{.ID}}">{{.Name}}</option>
+          {{end}}
+        </select>
+      </div>
+      {{end}}
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" id="cancelPostModal">Cancel</button>
+        <button type="submit" class="btn-submit">Post</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- NEW CATEGORY MODAL -->
+<div class="modal-backdrop" id="catModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2>New Category</h2>
+      <button class="modal-close" id="closeCatModal" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form method="POST" action="/forums/category/create">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <div class="form-field">
+        <label for="catName">CATEGORY NAME *</label>
+        <input type="text" id="catName" name="name" class="form-input" placeholder="e.g. Privacy, OSINT, Hacking…" required maxlength="80" autocomplete="off">
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" id="cancelCatModal">Cancel</button>
+        <button type="submit" class="btn-submit">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EXPLORE / CREATE SERVER DRAWER -->
+<div class="explore-drawer" id="exploreDrawer">
+  <div class="explore-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <h2 style="margin:0;">Servers & Communities</h2>
+      <button onclick="closeExplore()" title="Close" style="background:transparent;border:none;cursor:pointer;color:var(--text-dim);display:flex;align-items:center;gap:6px;font-family:'Space Grotesk',sans-serif;font-size:0.82rem;font-weight:600;padding:6px 10px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">
+        <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back
+      </button>
+    </div>
+    <p class="ep-sub">Follow servers to pin them in the panel.</p>
+
+    {{if .Session}}
+    <div class="explore-section-title">CREATE NEW SERVER</div>
+    <div id="createErrorMsg" style="display:none;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);border-radius:10px;padding:10px 13px;margin-bottom:12px;color:#f87171;font-size:0.82rem;font-family:'Space Grotesk',sans-serif;"></div>
+    <form id="createServerForm">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <div class="form-field" style="margin-bottom:12px;">
+        <label for="srvName">SERVER NAME *</label>
+        <input type="text" id="srvName" name="name" class="form-input" placeholder="e.g. Shadow Dev, Crypto Corner…" required maxlength="100" autocomplete="off" oninput="autoHandle(this.value)">
+      </div>
+      <div class="form-field" style="margin-bottom:12px;">
+        <label for="srvHandle">SERVER HANDLE <span style="font-size:0.65rem;color:var(--text-dimmer);">unique @tag for search</span></label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="color:var(--text-dim);font-size:0.9rem;">@</span>
+          <input type="text" id="srvHandle" name="handle" class="form-input" placeholder="e.g. shadow-dev" maxlength="50" autocomplete="off" style="flex:1;" oninput="checkHandleCreate(this.value)">
+          <span id="createHandleStatus" style="font-size:0.7rem;font-family:'JetBrains Mono',monospace;white-space:nowrap;"></span>
+        </div>
+      </div>
+      <div class="form-field" style="margin-bottom:16px;">
+        <label for="srvDesc">DESCRIPTION</label>
+        <input type="text" id="srvDesc" name="description" class="form-input" placeholder="What's this server about?" maxlength="200" autocomplete="off">
+      </div>
+      <button type="submit" id="createServerBtn" class="btn-submit" style="width:100%;border-radius:10px;">Create Server</button>
+    </form>
+    <div class="explore-divider"></div>
+    {{end}}
+
+    {{if .Servers}}
+    <div class="explore-section-title">ALL SERVERS</div>
+    <div class="server-list" id="exploreServerList">
+      {{range .Servers}}
+      <div class="server-item explore-srv-item" data-members="{{.MemberCount}}"
+        data-id="{{.ID}}" data-slug="{{.Slug}}" data-name="{{.Name}}"
+        data-desc="{{if .Description}}{{if gt (len .Description) 60}}{{slice .Description 0 60}}…{{else}}{{.Description}}{{end}}{{end}}"
+        data-initials="{{.Initials}}" data-following="{{if .IsFollowing}}1{{else}}0{{end}}"
+        data-logo="{{.LogoURL}}"
+        style="display:none;">
+        <a href="/forums/server/{{.PublicID}}" class="server-icon" style="text-decoration:none;">{{if .LogoURL}}<img src="{{.LogoURL}}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" alt="">{{else}}{{.Initials}}{{end}}</a>
+        <div class="server-info">
+          <a href="/forums/server/{{.PublicID}}" class="server-name" style="text-decoration:none;color:var(--text);">{{.Name}}</a>
+          {{if .Description}}<div class="server-desc">{{if gt (len .Description) 60}}{{slice .Description 0 60}}…{{else}}{{.Description}}{{end}}</div>{{end}}
+        </div>
+        {{if $.Session}}
+        <button class="follow-btn{{if .IsFollowing}} following{{end}}" type="button"
+          onclick="toggleServerFollow({{.ID}}, this)">
+          {{if .IsFollowing}}Following{{else}}Follow{{end}}
+        </button>
+        {{end}}
+      </div>
+      {{end}}
+    </div>
+    <button id="exploreLoadMore" type="button" onclick="exploreLoadMore()" style="display:none;width:100%;margin-top:8px;padding:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;color:var(--text-dim);font-size:0.82rem;cursor:pointer;letter-spacing:0.05em;">LOAD MORE</button>
+    {{end}}
+  </div>
+  <div style="flex:1;" onclick="closeExplore()"></div>
+</div>
+
+<script>
+(function(){
+  var CSRF = '{{.CSRFToken}}';
+  window.autoHandle = function(name) {
+    var h = name.toLowerCase().replace(/[^a-z0-9\-_]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    var el = document.getElementById('srvHandle');
+    if (el && !el._userEdited) { el.value = h; checkHandleCreate(h); }
+  };
+  if (document.getElementById('srvHandle')) {
+    document.getElementById('srvHandle').addEventListener('input', function(){ this._userEdited = true; });
+  }
+  window.checkHandleCreate = function(val) {
+    val = val.toLowerCase().replace(/[^a-z0-9\-_]/g, '');
+    var el = document.getElementById('createHandleStatus');
+    if (!val) { if(el) el.textContent = ''; return; }
+    if(el) el.textContent = '…';
+    fetch('/api/forums/handle-check?handle=' + encodeURIComponent(val))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(el) { el.textContent = d.available ? '✓ available' : '✗ taken'; el.style.color = d.available ? '#6dba7c' : '#e07070'; }
+      });
+  };
+  var IS_LOGGED_IN = {{if .Session}}true{{else}}false{{end}};
+
+  /* ── feed state ── */
+  var feedState = {
+    cat: '{{.ActiveCat}}',
+    server: '',
+    sort: '',
+    date: '',
+    tag: '{{.ActiveHashtag}}',
+    searchType: ''
+  };
+
+  function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  /* ── keyboard shortcut / ── */
+  var searchInput = document.getElementById('forumSearch');
+  document.addEventListener('keydown', function(e){
+    if(e.key==='/' && document.activeElement!==searchInput && !document.querySelector('.modal-backdrop.open')){
+      e.preventDefault(); searchInput.focus();
+    }
+    if(e.key==='Escape'){
+      searchInput.blur();
+      hideDropdown();
+      hideFilterPanel();
+      closeDrawer();
+      closeExplore();
+    }
+  });
+
+  /* ── mobile left-panel drawer ── */
+  var fab = document.getElementById('fabCommunities');
+  var leftPanel = document.getElementById('leftPanel');
+  var drawerOverlay = document.getElementById('drawerOverlay');
+  function openDrawer(){ leftPanel.classList.add('drawer-open'); drawerOverlay.classList.add('active'); document.body.style.overflow='hidden'; }
+  function closeDrawer(){ leftPanel.classList.remove('drawer-open'); drawerOverlay.classList.remove('active'); document.body.style.overflow=''; }
+  if(fab) fab.addEventListener('click', openDrawer);
+  if(drawerOverlay) drawerOverlay.addEventListener('click', function(){ closeDrawer(); hideFilterPanel(); });
+
+  /* ══════════════════════════════════════════
+     FILTER PANEL
+  ══════════════════════════════════════════ */
+  var filterPanel = document.getElementById('filterPanel');
+  var filterToggle = document.getElementById('filterToggle');
+  var filterBadge = document.getElementById('filterBadge');
+
+  filterToggle.addEventListener('click', function(e){
+    e.stopPropagation();
+    var open = filterPanel.style.display !== 'none';
+    if(open){ hideFilterPanel(); } else { showFilterPanel(); hideDropdown(); }
+  });
+
+  function showFilterPanel(){ filterPanel.style.display = 'block'; filterToggle.classList.add('active'); }
+  function hideFilterPanel(){ filterPanel.style.display = 'none'; filterToggle.classList.remove('active'); }
+
+  document.addEventListener('click', function(e){
+    if(!filterPanel.contains(e.target) && e.target !== filterToggle){
+      hideFilterPanel();
+    }
+  });
+
+  function updateFilterBadge(){
+    var count = 0;
+    if(feedState.sort) count++;
+    if(feedState.date) count++;
+    if(feedState.tag) count++;
+    if(feedState.searchType) count++;
+    if(count > 0){ filterBadge.textContent = count; filterBadge.style.display = 'flex'; }
+    else { filterBadge.style.display = 'none'; }
+  }
+
+  /* Sort buttons */
+  document.getElementById('fpSort').addEventListener('click', function(e){
+    var btn = e.target.closest('.fpseg-btn');
+    if(!btn) return;
+    document.querySelectorAll('#fpSort .fpseg-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    feedState.sort = btn.dataset.val;
+    updateFilterBadge(); updateFilterPills(); loadFeed(true);
+  });
+
+  /* Date buttons */
+  document.getElementById('fpDate').addEventListener('click', function(e){
+    var btn = e.target.closest('.fpchip-btn');
+    if(!btn) return;
+    document.querySelectorAll('#fpDate .fpchip-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    feedState.date = btn.dataset.val;
+    updateFilterBadge(); updateFilterPills(); loadFeed(true);
+  });
+
+  /* Search type buttons */
+  document.getElementById('fpType').addEventListener('click', function(e){
+    var btn = e.target.closest('.fpchip-btn');
+    if(!btn) return;
+    document.querySelectorAll('#fpType .fpchip-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    feedState.searchType = btn.dataset.val;
+    updateFilterBadge(); updateFilterPills();
+    /* if there's a search query, reload dropdown */
+    var q = searchInput.value.trim();
+    if(q){ triggerSearch(q); }
+  });
+
+  /* Hashtag filter input */
+  var fpTagInput = document.getElementById('fpTagInput');
+  var tagTimer;
+  fpTagInput.addEventListener('input', function(){
+    clearTimeout(tagTimer);
+    tagTimer = setTimeout(function(){
+      feedState.tag = fpTagInput.value.trim().replace(/^#/,'');
+      updateFilterBadge(); updateFilterPills(); loadFeed(true);
+    }, 400);
+  });
+
+  /* Active filter pills */
+  var filterActiveBar = document.getElementById('filterActiveBar');
+  function updateFilterPills(){
+    var pills = [];
+    if(feedState.sort){
+      var sortLabels = {'top':'Top rated','hot':'Most discussed'};
+      pills.push({key:'sort', label: sortLabels[feedState.sort] || feedState.sort});
+    }
+    if(feedState.date){
+      var dateLabels = {'today':'Today','week':'This week','month':'This month','year':'This year'};
+      pills.push({key:'date', label: dateLabels[feedState.date] || feedState.date});
+    }
+    if(feedState.tag){
+      pills.push({key:'tag', label:'#' + feedState.tag});
+    }
+    if(feedState.searchType){
+      pills.push({key:'searchType', label:'In: ' + feedState.searchType});
+    }
+    if(pills.length === 0){ filterActiveBar.style.display='none'; return; }
+    filterActiveBar.style.display = 'flex';
+    filterActiveBar.innerHTML = pills.map(function(p){
+      return '<span class="filter-pill">' + esc(p.label) + '<span class="filter-pill-x" onclick="clearFilterKey(\'' + p.key + '\')">&times;</span></span>';
+    }).join('');
+  }
+
+  window.clearFilterKey = function(key){
+    feedState[key] = '';
+    if(key === 'sort'){
+      document.querySelectorAll('#fpSort .fpseg-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.val === ''); });
+    }
+    if(key === 'date'){
+      document.querySelectorAll('#fpDate .fpchip-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.val === ''); });
+    }
+    if(key === 'tag'){ fpTagInput.value = ''; }
+    if(key === 'searchType'){
+      document.querySelectorAll('#fpType .fpchip-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.val === ''); });
+    }
+    updateFilterBadge(); updateFilterPills(); loadFeed(true);
+  };
+
+  /* ══════════════════════════════════════════
+     CATEGORY CHIP CLICK
+  ══════════════════════════════════════════ */
+  window.handleCatClick = function(e, el, catSlug, catName){
+    e.preventDefault();
+    feedState.cat = catSlug;
+    feedState.server = '';
+    /* Update chip active state */
+    document.querySelectorAll('.chips .chip').forEach(function(c){ c.classList.remove('active'); });
+    el.classList.add('active');
+    /* Update hidden form input */
+    document.getElementById('hiddenCat').value = catSlug;
+    /* Hide server header */
+    hideServerHeader();
+    /* Update page title */
+    document.getElementById('pageTitle').textContent = catName === 'All Forums' ? 'Forums' : catName;
+    /* Load feed */
+    loadFeed(true);
+  };
+
+  /* ══════════════════════════════════════════
+     SERVER CLICK (left panel)
+  ══════════════════════════════════════════ */
+  window.handleServerClick = function(e, el){
+    e.preventDefault();
+    var slug = el.dataset.slug;
+    window.location.href = '/forums/server/' + slug;
+  };
+
+  window.clearServerFilter = function(){
+    feedState.server = '';
+    feedState.cat = '';
+    document.querySelectorAll('.left-panel .community-icon').forEach(function(i){ i.classList.remove('active'); });
+    var homeIcon = document.querySelector('.left-panel a[href="/forums"]');
+    if(homeIcon) homeIcon.classList.add('active');
+    document.querySelectorAll('.chips .chip[data-cat=""]').forEach(function(c){ c.classList.add('active'); });
+    hideServerHeader();
+    document.getElementById('pageTitle').textContent = 'Forums';
+    loadFeed(true);
+  };
+
+  function showServerHeader(name, initials, slug, serverData){
+    var hdr = document.getElementById('serverMiniHdr');
+    document.getElementById('smhIcon').textContent = initials || (name||'').slice(0,2).toUpperCase();
+    document.getElementById('smhName').textContent = name;
+    var link = document.getElementById('smhLink');
+    link.href = '/forums/server/' + slug;
+    link.textContent = 'View full page';
+    if(serverData){
+      document.getElementById('smhMeta').textContent = serverData.members + ' members';
+    } else {
+      document.getElementById('smhMeta').textContent = 'Loading…';
+    }
+    hdr.style.display = 'flex';
+  }
+
+  function hideServerHeader(){
+    document.getElementById('serverMiniHdr').style.display = 'none';
+  }
+
+  /* ══════════════════════════════════════════
+     FETCH FEED (no page reload)
+  ══════════════════════════════════════════ */
+  function buildFeedParams(page){
+    var p = new URLSearchParams();
+    if(feedState.cat) p.set('cat', feedState.cat);
+    if(feedState.server) p.set('server', feedState.server);
+    if(feedState.tag) p.set('tag', feedState.tag);
+    if(feedState.sort) p.set('sort', feedState.sort);
+    if(feedState.date) p.set('date', feedState.date);
+    if(page && page > 1) p.set('page', page);
+    var q = searchInput.value.trim();
+    if(q) p.set('q', q);
+    return p;
+  }
+
+  function loadFeed(pushState, page){
+    var p = buildFeedParams(page);
+    if(pushState){
+      var pageParams = new URLSearchParams(p);
+      var url = '/forums' + (pageParams.toString() ? '?' + pageParams.toString() : '');
+      history.pushState(feedState, '', url);
+    }
+    var feed = document.getElementById('postFeed');
+    feed.innerHTML = '<div class="feed-skeleton">' +
+      '<div class="feed-skel-item"></div><div class="feed-skel-item"></div><div class="feed-skel-item"></div>' +
+      '</div>';
+    fetch('/api/forums/posts?' + p.toString(), {credentials:'same-origin'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        renderFeed(d.posts || [], d.has_more, d.page || 1, d.server);
+      })
+      .catch(function(){
+        feed.innerHTML = '<div class="feed-empty"><p>Failed to load posts. Please try again.</p></div>';
+      });
+  }
+
+  window.loadMorePosts = function(e, page){
+    e.preventDefault();
+    loadFeed(true, page);
+    window.scrollTo({top: document.getElementById('postFeed').offsetTop - 80, behavior:'smooth'});
+  };
+
+  function renderFeed(posts, hasMore, page, serverData){
+    var feed = document.getElementById('postFeed');
+
+    /* Update server mini header with actual data */
+    if(feedState.server && serverData){
+      document.getElementById('smhMeta').textContent = serverData.members + ' members';
+    }
+
+    if(!posts || posts.length === 0){
+      var emptyMsg = feedState.cat ? ' in this category' : (feedState.server ? ' in this server' : '');
+      feed.innerHTML = '<div class="feed-empty"><p>No posts yet' + emptyMsg + '. Be the first to post!</p></div>';
+      return;
+    }
+
+    var html = '';
+    posts.forEach(function(p){
+      var upClass = p.vote === 1 ? ' voted-up' : '';
+      var downClass = p.vote === -1 ? ' voted-down' : '';
+      var scoreClass = p.score < 0 ? ' negative' : '';
+      var excerpt = p.body ? (p.body.length > 160 ? p.body.slice(0,160) + '…' : p.body) : '';
+      var tags = p.tags || [];
+
+      var meta = '';
+      if(p.cat_name) meta += '<a href="/forums?cat=' + esc(p.cat_slug) + '" class="tag">' + esc(p.cat_name) + '</a>';
+      if(p.srv_name) meta += '<a href="/forums/server/' + (p.srv_id || esc(p.srv_slug)) + '" class="tag" style="border-color:var(--accent);color:var(--accent);">' + esc(p.srv_name) + '</a>';
+      meta += '<span>' + esc(p.author) + '</span><span>·</span><span>' + esc(p.time_ago) + '</span>';
+      tags.forEach(function(t){ meta += '<a href="/forums?tag=' + esc(t) + '" class="hashtag">#' + esc(t) + '</a>'; });
+
+      var imgHtml = p.img ? '<img src="' + esc(p.img) + '" alt="" style="max-width:100%;max-height:220px;border-radius:10px;border:1px solid var(--line);margin-bottom:10px;object-fit:cover;" loading="lazy">' : '';
+      var replyWord = p.comments === 1 ? 'reply' : 'replies';
+
+      html += '<div class="post" data-post-id="' + p.id + '">';
+      html += '<div class="vote">';
+      html += '<button class="vote-up' + upClass + '" aria-label="Upvote" onclick="castVote(' + p.id + ',1,this)"><svg viewBox="0 0 24 24"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>';
+      html += '<span class="count' + scoreClass + '" id="score-' + p.id + '">' + p.score + '</span>';
+      html += '<button class="vote-down' + downClass + '" aria-label="Downvote" onclick="castVote(' + p.id + ',-1,this)"><svg viewBox="0 0 24 24"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button>';
+      html += '</div>';
+      html += '<div class="post-body">';
+      html += '<div class="post-meta">' + meta + '</div>';
+      html += '<h3><a href="/forums/post/' + p.id + '">' + esc(p.title) + '</a></h3>';
+      if(excerpt) html += '<p class="post-excerpt">' + esc(excerpt) + '</p>';
+      if(imgHtml) html += imgHtml;
+      html += '<div class="post-footer">';
+      html += '<a href="/forums/post/' + p.id + '#comments"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-1.1 4.2L21 20l-4.3-1.1a8.5 8.5 0 1 1 4.3-7.4z"/></svg>' + p.comments + ' ' + replyWord + '</a>';
+      html += '<span onclick="copyLink(\'/forums/post/' + p.id + '\')"><svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v14"/></svg>Share</span>';
+      html += '</div></div></div>';
+    });
+
+    if(hasMore){
+      html += '<div class="load-more-wrap"><button class="load-more-btn" onclick="loadMorePosts(event,' + (page+1) + ')">Load more posts</button></div>';
+    }
+    feed.innerHTML = html;
+  }
+
+  /* ══════════════════════════════════════════
+     LIVE SEARCH DROPDOWN (improved)
+  ══════════════════════════════════════════ */
+  var dropdown = document.getElementById('searchDropdown');
+  var searchTimer;
+  function hideDropdown(){ dropdown.style.display='none'; }
+
+  function triggerSearch(q){
+    clearTimeout(searchTimer);
+    var isAtQuery = q.startsWith('@');
+    var isHashQuery = q.startsWith('#');
+    var searchQ = isAtQuery ? q.slice(1) : (isHashQuery ? q.slice(1) : q);
+    var filterType = feedState.searchType;
+    if(isAtQuery && !filterType) filterType = 'servers';
+    if(isHashQuery){ feedState.tag = searchQ; updateFilterBadge(); updateFilterPills(); loadFeed(true); hideDropdown(); return; }
+    searchTimer = setTimeout(function(){
+      fetch('/api/forums/search?q=' + encodeURIComponent(searchQ) + '&filter=' + encodeURIComponent(filterType), {
+        credentials: 'same-origin'
+      }).then(function(r){ return r.json(); }).then(function(d){
+        renderDropdown(q, d.suggestions || [], d.results || []);
+      }).catch(function(){ hideDropdown(); });
+    }, 200);
+  }
+
+  searchInput.addEventListener('input', function(){
+    var q = this.value.trim();
+    if(!q){ hideDropdown(); return; }
+    triggerSearch(q);
+  });
+
+  function renderDropdown(query, suggestions, results){
+    var html = '';
+    var q = (query||'').trim();
+
+    /* Text suggestions (post title completions) */
+    if(suggestions && suggestions.length > 0){
+      suggestions.forEach(function(s){
+        var highlighted = esc(s).replace(new RegExp('('+esc(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<b>$1</b>');
+        html += '<a href="/forums?q=' + encodeURIComponent(s) + '" class="sd-suggestion">';
+        html += '<div class="sd-sugg-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div>';
+        html += '<span class="sd-sugg-text">' + highlighted + '</span>';
+        html += '</a>';
+      });
+    }
+
+    /* Group results by type */
+    var servers = results.filter(function(r){ return r.Type === 'server'; });
+    var users = results.filter(function(r){ return r.Type === 'user'; });
+    var posts = results.filter(function(r){ return r.Type === 'post'; });
+
+    /* ── Servers first ── */
+    if(servers.length > 0){
+      if(html) html += '<div class="sd-divider"></div>';
+      html += '<div class="sd-section-label">COMMUNITIES</div>';
+      servers.forEach(function(r){
+        var initials = r.Name ? r.Name.slice(0,2).toUpperCase() : '??';
+        var sub = r.MemberCount + ' members' + (r.Snippet ? ' · ' + r.Snippet.slice(0,45) : '');
+        html += '<a href="' + esc(r.URL || '/forums/server/'+r.Slug) + '" class="sd-item">';
+        html += '<div class="sd-icon">' + esc(initials) + '</div>';
+        html += '<div style="flex:1;min-width:0;"><div class="sd-name">' + esc(r.Name) + '</div><div class="sd-sub">' + esc(sub) + '</div></div>';
+        html += '<span class="sd-type">server</span></a>';
+      });
+    }
+
+    /* ── Users immediately after servers (with divider) ── */
+    if(users.length > 0){
+      html += '<div class="sd-divider"></div>';
+      html += '<div class="sd-section-label">USERS</div>';
+      users.forEach(function(r){
+        var initials = r.Name ? r.Name.slice(0,2).toUpperCase() : '??';
+        html += '<a href="' + esc(r.URL || '/profile/'+r.Slug) + '" class="sd-item">';
+        html += '<div class="sd-icon sd-avatar">' + esc(initials) + '</div>';
+        html += '<div style="flex:1;min-width:0;"><div class="sd-name">' + esc(r.Name) + '</div><div class="sd-sub">@' + esc(r.Slug) + '</div></div>';
+        html += '<span class="sd-type">user</span></a>';
+      });
+    }
+
+    /* ── Posts last ── */
+    if(posts.length > 0){
+      html += '<div class="sd-divider"></div>';
+      html += '<div class="sd-section-label">POSTS</div>';
+      posts.forEach(function(r){
+        var snippet = r.Snippet ? r.Snippet.slice(0,60) : '';
+        html += '<a href="' + esc(r.URL || '/forums/post/'+r.ID) + '" class="sd-item">';
+        html += '<div class="sd-icon" style="background:transparent;border:none;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></div>';
+        html += '<div style="flex:1;min-width:0;"><div class="sd-name">' + esc(r.Name) + '</div>' + (snippet ? '<div class="sd-sub">' + esc(snippet) + '</div>' : '') + '</div>';
+        html += '<span class="sd-type">post</span></a>';
+      });
+    }
+
+    if(!html){
+      html = '<div class="sd-empty">No results for "' + esc(q) + '"</div>';
+    }
+    dropdown.innerHTML = html;
+    dropdown.style.display = 'block';
+  }
+
+  document.addEventListener('click', function(e){
+    var searchWrap = document.getElementById('searchWrap');
+    if(!searchWrap.contains(e.target)){ hideDropdown(); }
+  });
+
+  searchInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      hideDropdown();
+      loadFeed(true);
+    }
+  });
+
+  /* ── create post modal ── */
+  var postBackdrop = document.getElementById('postModalBackdrop');
+  function openPostModal(){
+    if(!IS_LOGGED_IN){ window.location.href='/login'; return; }
+    postBackdrop.classList.add('open'); document.getElementById('postTitle').focus();
+  }
+  function closePostModal(){ postBackdrop.classList.remove('open'); }
+  var composeBar = document.getElementById('composeBar');
+  var openBtn = document.getElementById('openPostModal');
+  var composeInput = document.getElementById('composeInput');
+  if(composeBar) composeBar.addEventListener('click', openPostModal);
+  if(openBtn) openBtn.addEventListener('click', function(e){ e.stopPropagation(); openPostModal(); });
+  if(composeInput) composeInput.addEventListener('focus', openPostModal);
+  document.getElementById('closePostModal').addEventListener('click', closePostModal);
+  document.getElementById('cancelPostModal').addEventListener('click', closePostModal);
+  postBackdrop.addEventListener('click', function(e){ if(e.target===postBackdrop) closePostModal(); });
+
+  /* ── image preview ── */
+  var imgInput = document.getElementById('postImage');
+  if(imgInput) imgInput.addEventListener('change', function(){
+    var f = this.files[0];
+    if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){ document.getElementById('imgPreviewEl').src = ev.target.result; document.getElementById('imgPreview').style.display='block'; };
+    reader.readAsDataURL(f);
+  });
+
+  /* ── new category modal ── */
+  var catBackdrop = document.getElementById('catModalBackdrop');
+  document.getElementById('newCatBtn').addEventListener('click', function(){ catBackdrop.classList.add('open'); document.getElementById('catName').focus(); });
+  document.getElementById('closeCatModal').addEventListener('click', function(){ catBackdrop.classList.remove('open'); });
+  document.getElementById('cancelCatModal').addEventListener('click', function(){ catBackdrop.classList.remove('open'); });
+  catBackdrop.addEventListener('click', function(e){ if(e.target===catBackdrop) catBackdrop.classList.remove('open'); });
+
+  /* ── explore/server drawer ── */
+  var exploreDrawer = document.getElementById('exploreDrawer');
+  document.getElementById('exploreBtn').addEventListener('click', function(){
+    exploreDrawer.classList.add('open'); document.body.style.overflow='hidden';
+  });
+  window.closeExplore = function(){ exploreDrawer.classList.remove('open'); document.body.style.overflow=''; };
+  /* auto-open drawer if ?explore=1 param present (e.g. coming from server page) */
+  if(new URLSearchParams(window.location.search).get('explore') === '1'){
+    exploreDrawer.classList.add('open'); document.body.style.overflow='hidden';
+    history.replaceState(null,'',window.location.pathname);
+  }
+  /* ── create server form: AJAX submit (no reload) ── */
+  var createServerForm = document.getElementById('createServerForm');
+  if(createServerForm){
+    createServerForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var errDiv = document.getElementById('createErrorMsg');
+      var btn = document.getElementById('createServerBtn');
+      errDiv.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Creating…';
+      var data = new URLSearchParams(new FormData(this));
+      fetch('/forums/server/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: data.toString()
+      }).then(function(r){ return r.json(); }).then(function(d){
+        if(d.ok){
+          window.location.href = d.redirect;
+        } else {
+          errDiv.textContent = d.error || 'Server could not be created.';
+          errDiv.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Create Server';
+          errDiv.scrollIntoView({behavior:'smooth', block:'nearest'});
+        }
+      }).catch(function(){
+        errDiv.textContent = 'Something went wrong. Please try again.';
+        errDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Create Server';
+      });
+    });
+  }
+
+  /* ── explore server list: sort by members, show 2 initially, load 10 more ── */
+  (function(){
+    var list = document.getElementById('exploreServerList');
+    var loadMoreBtn = document.getElementById('exploreLoadMore');
+    if(!list) return;
+    var items = Array.prototype.slice.call(list.querySelectorAll('.explore-srv-item'));
+    items.sort(function(a,b){ return parseInt(b.dataset.members||0,10) - parseInt(a.dataset.members||0,10); });
+    items.forEach(function(el){ list.appendChild(el); });
+    var shown = 0;
+    function showMore(count){
+      var toShow = items.slice(shown, shown + count);
+      toShow.forEach(function(el){ el.style.display = ''; });
+      shown += toShow.length;
+      if(loadMoreBtn){ loadMoreBtn.style.display = shown < items.length ? '' : 'none'; }
+    }
+    showMore(2);
+    window.exploreLoadMore = function(){ showMore(10); };
+  })();
+
+  /* ── voting ── */
+  window.castVote = function(postID, value, btn){
+    if(!IS_LOGGED_IN){ window.location.href='/login'; return; }
+    var currentVote = btn.classList.contains('voted-up') ? 1 : (btn.classList.contains('voted-down') ? -1 : 0);
+    var send = (currentVote === value) ? 0 : value;
+    fetch('/api/forums/post/' + postID + '/vote', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'value=' + send + '&_csrf=' + encodeURIComponent(CSRF)
+    }).then(function(r){ return r.json(); }).then(function(d){
+      var scoreEl = document.getElementById('score-' + postID);
+      if(scoreEl){ scoreEl.textContent = d.score; scoreEl.className = 'count' + (d.score < 0 ? ' negative' : ''); }
+      var post = document.querySelector('[data-post-id="' + postID + '"]');
+      if(post){
+        post.querySelector('.vote-up').classList.toggle('voted-up', d.user_vote === 1);
+        post.querySelector('.vote-down').classList.toggle('voted-down', d.user_vote === -1);
+      }
+    }).catch(function(){});
+  };
+
+  /* ── server follow toggle (explore drawer) ── */
+  window.toggleServerFollow = function(serverID, btn){
+    if(!IS_LOGGED_IN){ window.location.href='/login'; return; }
+    fetch('/api/forums/server/' + serverID + '/follow', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: '_csrf=' + encodeURIComponent(CSRF)
+    }).then(function(r){ return r.json(); }).then(function(d){
+      btn.textContent = d.following ? 'Following' : 'Follow';
+      btn.classList.toggle('following', d.following);
+    }).catch(function(){});
+  };
+
+  /* ── share/copy link ── */
+  window.copyLink = function(path){
+    navigator.clipboard.writeText(window.location.origin + path).catch(function(){});
+  };
+
+  /* ── browser back/forward ── */
+  window.addEventListener('popstate', function(e){
+    if(e.state){
+      feedState.cat = e.state.cat || '';
+      feedState.server = e.state.server || '';
+      feedState.sort = e.state.sort || '';
+      feedState.date = e.state.date || '';
+      feedState.tag = e.state.tag || '';
+      loadFeed(false);
+    }
+  });
+
+})();
+</script>
+{{end}}

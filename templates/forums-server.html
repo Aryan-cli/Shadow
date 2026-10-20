@@ -1,0 +1,1246 @@
+{{define "title"}}{{.Server.Name}} — Shadow Forums{{end}}
+
+{{define "content"}}
+<style>
+  :root { --left-panel-bg: #0c0c0e; }
+  html[data-theme="light"] { --left-panel-bg: #e8e7e5; }
+  footer { margin-left: 68px; }
+  @media (max-width: 760px) { footer { margin-left: 0; } }
+
+  .left-panel {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 68px; z-index: 40;
+    display: flex; flex-direction: column; align-items: center;
+    padding-top: 96px; padding-bottom: 24px;
+    background: var(--left-panel-bg); border-right: 1px solid var(--line);
+    transition: background 0.35s ease; overflow-y: auto; scrollbar-width: none;
+  }
+  .left-panel::-webkit-scrollbar { display: none; }
+  .left-panel-divider { width: 32px; height: 1px; background: var(--line); margin: 10px 0; flex-shrink: 0; }
+  .community-icon {
+    position: relative; width: 42px; height: 42px; border-radius: 50%;
+    background: var(--surface-2); border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; cursor: pointer; margin-bottom: 8px;
+    transition: border-radius 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.78rem; font-weight: 700;
+    color: var(--text-dim); user-select: none; text-decoration: none;
+  }
+  .community-icon:hover { border-radius: 14px; border-color: var(--text-dimmer); background: var(--surface); color: var(--text); }
+  .community-icon.active { border-radius: 14px; background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+  .community-icon::before {
+    content: ''; position: absolute; left: -13px; top: 50%;
+    transform: translateY(-50%) scaleY(0); width: 4px; height: 20px;
+    border-radius: 0 3px 3px 0; background: var(--text);
+    transition: transform 0.2s ease, height 0.2s ease;
+  }
+  .community-icon:hover::before { transform: translateY(-50%) scaleY(1); height: 10px; }
+  .community-icon.active::before { transform: translateY(-50%) scaleY(1); height: 20px; background: var(--accent); }
+  .community-icon .tip {
+    position: absolute; left: calc(100% + 14px); top: 50%;
+    background: var(--dropdown-bg); border: 1px solid var(--nav-border); border-radius: 8px;
+    padding: 6px 12px; font-family: 'Space Grotesk', sans-serif; font-size: 0.82rem;
+    font-weight: 600; color: var(--text); white-space: nowrap; pointer-events: none;
+    opacity: 0; transform: translateY(-50%) translateX(-4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3); z-index: 100;
+  }
+  .community-icon:hover .tip { opacity: 1; transform: translateY(-50%) translateX(0); }
+  .community-icon.add-btn { border-style: dashed; color: var(--text-dimmer); font-size: 1.2rem; font-weight: 400; }
+  .community-icon.add-btn:hover { color: var(--text-dim); border-style: solid; }
+  .lp-user-icon, .lp-user-icon:hover, .lp-user-icon.active { border-radius: 50% !important; overflow: hidden; }
+  .join-banner {
+    position: fixed; bottom: 0; left: 68px; right: 0; z-index: 90;
+    background: var(--surface); border-top: 1px solid var(--line);
+    padding: 14px 28px; display: flex; align-items: center; gap: 16px;
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.28);
+  }
+  .jb-icon {
+    width: 42px; height: 42px; border-radius: 12px; background: var(--accent);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+    color: var(--accent-contrast); font-size: 0.9rem;
+  }
+  .jb-info { flex: 1; min-width: 0; }
+  .jb-name { font-weight: 600; font-size: 0.92rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .jb-sub { font-size: 0.72rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+  .jb-close {
+    background: none; border: none; color: var(--text-dimmer); cursor: pointer;
+    font-size: 1.3rem; line-height: 1; padding: 4px 8px; transition: color 0.2s;
+  }
+  .jb-close:hover { color: var(--text-dim); }
+  @media (max-width: 760px) { .join-banner { left: 0; padding: 12px 16px; } }
+
+  .page-wrap { margin-left: 68px; display: flex; min-height: 100vh; }
+  .page {
+    position: relative; z-index: 1; flex: 1; max-width: 1400px;
+    padding: 120px 32px 80px;
+    display: grid; grid-template-columns: 1fr 320px;
+    column-gap: 32px;
+    grid-template-areas: "header header" "main sidebar";
+  }
+
+  /* Server header — new design */
+  .srv-header {
+    grid-area: header;
+    border: 1px solid var(--line); border-radius: 16px;
+    background: var(--surface); margin-bottom: 20px;
+    overflow: hidden; position: relative;
+  }
+  .srv-banner {
+    height: 160px; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #6F6AF8 0%, #1e1e30 100%);
+  }
+  .srv-banner::before {
+    content: ''; position: absolute;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+    top: -70px; right: 30px;
+  }
+  .srv-banner::after {
+    content: ''; position: absolute;
+    width: 100px; height: 100px; border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    bottom: -30px; right: 140px;
+  }
+  .srv-identity {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 0 22px 14px; margin-top: -26px; position: relative; z-index: 2;
+  }
+  .srv-icon-big {
+    width: 62px; height: 62px; border-radius: 16px; flex-shrink: 0;
+    border: 3px solid var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700;
+    color: #fff; background: #6F6AF8;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+  }
+  .srv-info { flex: 1; min-width: 0; padding-top: 32px; }
+  .srv-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .srv-info h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+  .srv-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.45; margin-top: 3px; }
+  .role-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 100px; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.04em; flex-shrink: 0; }
+  .role-badge.owner { background: rgba(255,200,50,0.12); color: #ffcc33; border: 1px solid rgba(255,200,50,0.25); }
+  .role-badge.partner { background: rgba(100,160,255,0.12); color: #64a0ff; border: 1px solid rgba(100,160,255,0.25); }
+  .role-badge.member { background: var(--surface-2); color: var(--text-dimmer); border: 1px solid var(--line); }
+
+  /* Stats bar */
+  .srv-stats-bar {
+    display: flex; align-items: stretch;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .srv-stat {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex: 1; padding: 11px 6px; gap: 2px;
+  }
+  .srv-stat-val {
+    font-family: 'Space Grotesk', sans-serif; font-size: 1.18rem; font-weight: 700;
+    color: var(--text); display: flex; align-items: center; gap: 5px;
+  }
+  .srv-stat-lbl {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+    color: var(--text-dimmer); letter-spacing: 0.06em;
+  }
+  .srv-stat-divider { width: 1px; background: var(--line); flex-shrink: 0; margin: 8px 0; }
+  .dot-online { width: 7px; height: 7px; border-radius: 50%; background: #3FFF8D; display: inline-block; flex-shrink: 0; }
+
+  /* Actions bar */
+  .srv-actions-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 14px 22px;
+  }
+  .btn-join { padding: 8px 22px; border-radius: 100px; background: var(--accent); color: var(--accent-contrast); border: 1px solid var(--accent); font-size: 0.86rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; white-space: nowrap; }
+  .btn-join:hover { opacity: 0.82; }
+  .btn-leave { padding: 8px 22px; border-radius: 100px; background: none; color: var(--text-dim); border: 1px solid var(--line); font-size: 0.86rem; cursor: pointer; transition: border-color 0.2s, color 0.2s; white-space: nowrap; }
+  .btn-leave:hover { border-color: #E05555; color: #E05555; }
+  .btn-manage {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 18px; border-radius: 100px;
+    border: 1px solid var(--line); background: none;
+    color: var(--text-dim); font-size: 0.84rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-manage:hover { border-color: var(--text-dimmer); color: var(--text); background: var(--surface-2); }
+  .btn-manage svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+
+  /* Main column wrapping compose + feed */
+  .main-col { grid-area: main; display: flex; flex-direction: column; min-width: 0; }
+
+  /* Compose */
+  .compose {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 8px 8px 16px; border: 1px solid var(--line); border-radius: 100px;
+    background: var(--surface); margin-bottom: 14px; cursor: pointer;
+  }
+  .compose input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.88rem; cursor: pointer; }
+  .compose input::placeholder { color: var(--text-dimmer); }
+  .compose-btn { padding: 7px 18px; border-radius: 100px; background: #6fe4a0; color: #0a0a12; font-size: 0.82rem; font-weight: 600; border: none; transition: opacity 0.2s ease; white-space: nowrap; cursor: pointer; }
+  .compose-btn:hover { opacity: 0.82; }
+  @media (max-width: 760px) {
+    .compose { padding: 4px 4px 4px 12px; gap: 6px; margin-bottom: 8px; }
+    .compose input { font-size: 0.78rem; line-height: 1.2; }
+    .compose-btn { padding: 4px 12px; font-size: 0.74rem; line-height: 1.4; }
+  }
+
+  /* Feed */
+  .feed { display: flex; flex-direction: column; gap: 10px; }
+  .post { display: flex; gap: 14px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); transition: border-color 0.2s ease; }
+  .post:hover { border-color: var(--text-dimmer); }
+  .vote { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; width: 32px; }
+  .vote button { width: 24px; height: 24px; border-radius: 7px; border: 1px solid var(--line); background: none; color: var(--text-dim); display: flex; align-items: center; justify-content: center; transition: border-color 0.2s, color 0.2s, background 0.2s; }
+  .vote button:hover { border-color: var(--up); color: var(--up); }
+  .vote button.voted-up { border-color: var(--up); color: var(--up); background: rgba(111,224,160,0.08); }
+  .vote button.voted-down { border-color: #E05555; color: #E05555; background: rgba(224,85,85,0.08); }
+  .vote button svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+  .vote .count { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 500; color: var(--up); }
+  .vote .count.negative { color: #E05555; }
+  .post-body { flex: 1; min-width: 0; }
+  .post-meta { display: flex; align-items: center; gap: 7px; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-dimmer); margin-bottom: 7px; flex-wrap: wrap; }
+  .tag { padding: 2px 8px; border-radius: 100px; border: 1px solid var(--line); color: var(--text-dim); text-decoration: none; transition: border-color 0.2s, color 0.2s; }
+  .tag:hover { color: var(--text); border-color: var(--text-dimmer); }
+  .hashtag { color: var(--text-dimmer); text-decoration: none; }
+  .hashtag:hover { color: var(--text-dim); }
+  .post h3 { font-family: 'Space Grotesk', sans-serif; font-size: 0.98rem; font-weight: 600; margin-bottom: 5px; line-height: 1.35; }
+  .post h3 a { color: inherit; text-decoration: none; }
+  .post h3 a:hover { opacity: 0.85; }
+  .post-excerpt { color: var(--text-dim); font-size: 0.86rem; margin-bottom: 11px; }
+  .post-footer { display: flex; align-items: center; gap: 16px; font-size: 0.76rem; color: var(--text-dimmer); }
+  .post-footer a, .post-footer span { display: flex; align-items: center; gap: 5px; transition: color 0.2s; text-decoration: none; color: var(--text-dimmer); }
+  .post-footer a:hover, .post-footer span:hover { color: var(--text-dim); cursor: pointer; }
+  .post-footer svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+  .post-thumb { width: 72px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--line); }
+  .feed-empty { padding: 48px 24px; text-align: center; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+  .feed-empty p { color: var(--text-dim); font-size: 0.9rem; }
+  .load-more-wrap { text-align: center; padding: 16px 0; }
+  .load-more-btn { padding: 9px 24px; border-radius: 100px; border: 1px solid var(--line); background: var(--surface); color: var(--text-dim); font-size: 0.84rem; cursor: pointer; text-decoration: none; transition: border-color 0.2s, color 0.2s; }
+  .load-more-btn:hover { border-color: var(--text-dimmer); color: var(--text); }
+
+  /* Sidebar */
+  .sidebar { grid-area: sidebar; display: flex; flex-direction: column; gap: 14px; }
+  .side-card { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; }
+  .side-card-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+  .side-card-head .title { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-dimmer); letter-spacing: 0.06em; }
+  .side-card-body { padding: 14px 16px; }
+  .member-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .member-row:last-child { border-bottom: none; }
+  .member-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#555560,#1e1e24); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 0.65rem; font-weight: 600; color: #fff; flex-shrink: 0; position: relative; }
+  .member-avatar.online::after { content:''; position:absolute; bottom:-1px; right:-1px; width:7px; height:7px; border-radius:50%; background:#3FFF8D; border:1.5px solid var(--bg); }
+  .member-name { flex: 1; font-size: 0.84rem; color: var(--text-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .member-actions { display: flex; gap: 5px; flex-shrink: 0; }
+  .action-btn { padding: 3px 8px; border-radius: 6px; border: 1px solid var(--line); background: none; font-size: 0.68rem; color: var(--text-dimmer); cursor: pointer; transition: border-color 0.2s, color 0.2s; white-space: nowrap; }
+  .action-btn:hover { border-color: var(--text-dimmer); color: var(--text-dim); }
+  .action-btn.danger:hover { border-color: #E05555; color: #E05555; }
+  .action-btn.promote:hover { border-color: #64a0ff; color: #64a0ff; }
+
+  /* Settings modal */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--bg); border: 1px solid var(--nav-border); border-radius: 20px;
+    width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto;
+    padding: 0; box-shadow: 0 32px 80px rgba(0,0,0,0.6); animation: modalIn 0.2s ease;
+  }
+  @keyframes modalIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 26px 18px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 5; }
+  .modal-header h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 600; }
+  .modal-close { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+  .modal-close:hover { border-color: var(--text-dimmer); color: var(--text); }
+  .modal-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .modal-tabs { display: flex; gap: 2px; padding: 14px 26px 0; border-bottom: 1px solid var(--line); }
+  .modal-tab { padding: 8px 16px; border-radius: 8px 8px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-dimmer); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.2s; }
+  .modal-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .modal-body { padding: 22px 26px; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+  .form-field { margin-bottom: 16px; }
+  .form-field label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-dimmer); letter-spacing: 0.06em; margin-bottom: 8px; }
+  .form-input { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+  .form-input:focus { border-color: var(--text-dimmer); }
+  .form-input::placeholder { color: var(--text-dimmer); }
+  .form-hint { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-dimmer); margin-top: 5px; }
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+  .btn-cancel { padding: 9px 20px; border-radius: 100px; border: 1px solid var(--line); background: none; color: var(--text-dim); font-size: 0.86rem; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+  .btn-cancel:hover { border-color: var(--text-dimmer); color: var(--text); }
+  .btn-submit { padding: 9px 22px; border-radius: 100px; background: var(--accent); color: var(--accent-contrast); border: 1px solid var(--accent); font-size: 0.86rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+  .btn-submit:hover { opacity: 0.85; }
+  .settings-member-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .settings-member-row:last-child { border-bottom: none; }
+  .settings-member-info { flex: 1; min-width: 0; }
+  .settings-member-name { font-size: 0.86rem; color: var(--text); }
+  .settings-member-role { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--text-dimmer); margin-top: 2px; }
+  .settings-member-btns { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .s-btn { padding: 4px 10px; border-radius: 7px; font-size: 0.72rem; border: 1px solid var(--line); background: none; color: var(--text-dim); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .s-btn:hover { border-color: var(--text-dimmer); color: var(--text); }
+  .s-btn.s-promote:hover { border-color: #64a0ff; color: #64a0ff; }
+  .s-btn.s-demote:hover { border-color: var(--text-dimmer); color: var(--text-dim); }
+  .s-btn.s-kick:hover { border-color: #E09955; color: #E09955; }
+  .s-btn.s-ban:hover { border-color: #E05555; color: #E05555; }
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 20px; font-size: 0.84rem; color: var(--text); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.25s, bottom 0.25s; white-space: nowrap; }
+  .toast.show { opacity: 1; bottom: 36px; }
+
+  /* Desktop right-side settings button */
+  .desk-settings-btn {
+    display: none;
+    position: fixed; top: 50%; right: 0; z-index: 90;
+    transform: translateY(-50%);
+    flex-direction: column; align-items: center; justify-content: center;
+    width: 36px; height: 72px; border-radius: 12px 0 0 12px;
+    background: var(--surface); border: 1px solid var(--line); border-right: none;
+    color: var(--text-dimmer); cursor: pointer; transition: background 0.2s, color 0.2s;
+    box-shadow: -4px 0 16px rgba(0,0,0,0.25);
+  }
+  .desk-settings-btn:hover { background: var(--surface-2); color: var(--text); }
+  .desk-settings-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+  @media (min-width: 761px) { .desk-settings-btn { display: flex; } }
+
+  /* share card */
+  .share-invite-row { display: flex; align-items: center; gap: 8px; }
+  .share-invite-input { flex: 1; font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--text-dimmer); background: var(--surface-2); border:1px solid var(--line); border-radius:7px; padding:6px 10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
+  .share-copy-btn { padding:6px 12px; border-radius:7px; background:var(--accent); color:var(--accent-contrast); border:none; font-size:0.72rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:opacity 0.2s; }
+  .share-copy-btn:hover { opacity:0.82; }
+
+  /* image upload fields */
+  .img-upload-wrap { display:flex; align-items:center; gap:12px; }
+  .img-upload-preview { width:56px; height:56px; border-radius:10px; object-fit:cover; border:1px solid var(--line); background:var(--surface-2); display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; font-family:'Space Grotesk',sans-serif; font-size:0.8rem; font-weight:700; color:var(--text-dimmer); }
+  .img-upload-preview img { width:100%; height:100%; object-fit:cover; }
+  .img-upload-preview.wide { width:100px; height:56px; border-radius:8px; font-size:0.7rem; }
+  .img-upload-label { flex:1; }
+  .img-upload-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:100px; border:1px solid var(--line); background:none; color:var(--text-dim); font-size:0.78rem; cursor:pointer; transition:border-color 0.2s, color 0.2s; white-space:nowrap; }
+  .img-upload-btn:hover { border-color:var(--text-dimmer); color:var(--text); }
+  .img-upload-btn svg { width:12px; height:12px; stroke:currentColor; fill:none; stroke-width:2; }
+  .img-upload-hint { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--text-dimmer); margin-top:5px; }
+
+  /* profile popup */
+  .profile-popup-overlay { display:none; position:fixed; inset:0; z-index:500; }
+  .profile-popup {
+    position:absolute; background:var(--bg); border:1px solid var(--nav-border); border-radius:16px;
+    width:270px; box-shadow:0 16px 48px rgba(0,0,0,0.55); overflow:hidden;
+    animation: ppIn 0.15s ease; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  }
+  @keyframes ppIn { from{opacity:0;transform:scale(0.95) translateY(-4px);}to{opacity:1;transform:scale(1) translateY(0);} }
+  .popup-banner { height:56px; background:linear-gradient(135deg,#6F6AF8,#1e1e30); position:relative; overflow:visible; }
+  .popup-avatar {
+    position:absolute; bottom:-24px; left:14px;
+    width:48px; height:48px; border-radius:50%;
+    background:linear-gradient(135deg,#555560,#1e1e24); border:3px solid var(--bg);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-size:0.88rem; font-weight:700; color:#fff; overflow:hidden; z-index:2;
+  }
+  .popup-avatar img { width:100%; height:100%; object-fit:cover; }
+  .popup-body { padding:32px 14px 14px; }
+  .popup-name { font-family:'Space Grotesk',sans-serif; font-size:0.95rem; font-weight:600; margin-bottom:1px; }
+  .popup-uname { font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--text-dimmer); margin-bottom:8px; }
+  .popup-bio { font-size:0.8rem; color:var(--text-dim); line-height:1.5; margin-bottom:10px; }
+  .popup-acts { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .pp-btn { padding:8px 10px; border-radius:8px; font-size:0.75rem; font-weight:600; cursor:pointer; text-align:center; text-decoration:none; display:block; transition:background 0.18s,border-color 0.18s,color 0.18s; border:1px solid var(--line); background:none; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:'Space Grotesk',sans-serif; }
+  .pp-btn:hover { border-color:var(--text-dimmer); color:var(--text); }
+  .pp-btn-primary { background:#6fe4a0; color:#050506; border-color:#6fe4a0; }
+  .pp-btn-primary:hover { background:#5bc87a; border-color:#5bc87a; color:#050506; }
+  .pp-btn-following { background:none; color:var(--text-dim); border:1px solid var(--line); }
+  .pp-btn-following:hover { border-color:#E05555; color:#E05555; }
+  .popup-loading { padding:28px; text-align:center; color:var(--text-dimmer); font-size:0.82rem; }
+
+  /* Mobile */
+  .drawer-overlay { display: none; position: fixed; inset: 0; z-index: 55; background: rgba(0,0,0,0.55); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity: 0; pointer-events: none; transition: opacity 0.28s ease; }
+  .drawer-overlay.active { opacity: 1; pointer-events: auto; }
+  .fab-communities { position: fixed; bottom: 28px; left: 16px; z-index: 45; width: 50px; height: 50px; border-radius: 50%; background: var(--accent); color: var(--accent-contrast); border: none; display: none; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(0,0,0,0.45); cursor: pointer; transition: transform 0.2s ease; }
+  .fab-communities:active { transform: scale(0.92); }
+  .fab-communities svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .fab-admin {
+    position: fixed; bottom: 28px; right: 16px; z-index: 45;
+    width: 50px; height: 50px; border-radius: 50%;
+    background: var(--surface); color: var(--text-dim);
+    border: 1px solid var(--nav-border);
+    display: none; align-items: center; justify-content: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    cursor: pointer; transition: transform 0.2s ease, background 0.2s;
+  }
+  .fab-admin:hover { background: var(--surface-2); color: var(--text); }
+  .fab-admin:active { transform: scale(0.92); }
+  .fab-admin svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  @media (max-width: 760px) {
+    .left-panel { display: flex; width: 68px; padding-top: 90px; transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); z-index: 60; }
+    .left-panel.drawer-open { transform: translateX(0); background: #0c0c0e; box-shadow: 6px 0 40px rgba(0,0,0,0.6); }
+    html[data-theme="light"] .left-panel.drawer-open { background: #e8e7e5; }
+    .page-wrap { margin-left: 0; }
+    .page { grid-template-columns: 1fr; grid-template-areas: "header" "main"; padding-top: 88px; }
+    .sidebar { display: none; }
+    .drawer-overlay { display: block; }
+    .fab-communities { display: flex !important; }
+    .fab-admin { display: flex !important; }
+    .srv-info { padding-top: 28px; }
+    .srv-header { margin-top: 12px; }
+  }
+  /* toggle switch */
+  .toggle-row{display:flex;align-items:center;gap:12px;padding:4px 0;}
+  .toggle-switch{position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;}
+  .toggle-switch input{opacity:0;width:0;height:0;}
+  .toggle-track{position:absolute;inset:0;background:var(--line);border-radius:22px;transition:background .2s;cursor:pointer;}
+  .toggle-switch input:checked~.toggle-track{background:#6fe4a0;}
+  .toggle-track::before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:transform .2s;}
+  .toggle-switch input:checked~.toggle-track::before{transform:translateX(18px);}
+  .toggle-info{display:flex;flex-direction:column;gap:2px;}
+  .toggle-info>span{font-size:.82rem;font-weight:600;color:var(--text);}
+  .share-link-row{display:flex;align-items:center;gap:8px;}
+  .btn-share{background:none;border:1px solid var(--line);border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--text-dim);display:inline-flex;align-items:center;transition:border-color .15s,color .15s;}
+  .btn-share:hover{border-color:#6fe4a0;color:#6fe4a0;}
+  .btn-share svg{width:16px;height:16px;stroke-width:2;}
+  #srvToast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#23272f;color:#fff;padding:10px 22px;border-radius:20px;font-size:.82rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:9999;white-space:nowrap;border:1px solid rgba(111,228,160,.3);}
+  #srvToast.visible{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<button class="fab-communities" id="fabCommunities" aria-label="Open communities">
+  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+</button>
+{{if and .Session (or (eq .Server.UserRole "owner") (eq .Server.UserRole "partner"))}}
+<button class="fab-admin" id="fabAdmin" aria-label="Server Settings">
+  <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+</button>
+<button class="desk-settings-btn" id="deskSettingsBtn" aria-label="Server Settings" title="Server Settings">
+  <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+</button>
+{{end}}
+
+<!-- PROFILE POPUP OVERLAY -->
+<div class="profile-popup-overlay" id="srvProfileOverlay">
+  <div class="profile-popup" id="srvProfilePopup" style="position:absolute;">
+    <div class="popup-loading" id="srvPopupLoading">Loading…</div>
+  </div>
+</div>
+
+<!-- LEFT PANEL -->
+<div class="left-panel" id="leftPanel">
+  <a href="/forums" class="community-icon" title="All Forums">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+    <span class="tip">All Forums</span>
+  </a>
+  <div class="left-panel-divider"></div>
+  {{range .FollowedSrvs}}
+  <a href="/forums/server/{{.PublicID}}" class="community-icon{{if eq $.Server.PublicID .PublicID}} active{{end}}">
+    {{if .LogoURL}}<img src="{{.LogoURL}}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">{{else}}{{.Initials}}{{end}}
+    <span class="tip">{{.Name}}</span>
+  </a>
+  {{end}}
+  {{if .FollowedSrvs}}<div class="left-panel-divider"></div>{{end}}
+  {{if .FollowedUsers}}
+  {{range .FollowedUsers}}
+  <a href="/forums/u/{{.Username}}" class="community-icon lp-user-icon" title="@{{.Username}}">
+    {{if .AvatarPath}}<img src="/{{.AvatarPath}}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+    {{else}}{{if ge (len .Username) 2}}{{slice .Username 0 2 | upper}}{{else}}{{upper .Username}}{{end}}{{end}}
+    <span class="tip">@{{.Username}}</span>
+  </a>
+  {{end}}
+  <div class="left-panel-divider"></div>
+  {{end}}
+  <a href="/forums?explore=1" class="community-icon add-btn" title="Explore / Create Server">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+    <span class="tip">Explore / Create Server</span>
+  </a>
+</div>
+
+<div class="page-wrap">
+<div class="page">
+
+  <!-- SERVER HEADER -->
+  <div class="srv-header">
+    <div class="srv-banner" id="srvBanner"
+      {{if .Server.BannerURL}}style="background:url('{{.Server.BannerURL}}') center/cover no-repeat;"{{end}}></div>
+    <div class="srv-identity">
+      <div class="srv-icon-big" id="srvIconBig"
+        {{if .Server.LogoURL}}style="background:url('{{.Server.LogoURL}}') center/cover no-repeat;font-size:0;"{{end}}>{{.Server.Initials}}</div>
+      <div class="srv-info">
+        <div class="srv-name-row">
+          <h1>{{.Server.Name}}</h1>
+          {{if .Server.UserRole}}<span class="role-badge {{.Server.UserRole}}">{{upper .Server.UserRole}}</span>{{end}}
+        </div>
+        {{if .Server.Description}}<p class="srv-desc">{{.Server.Description}}</p>{{end}}
+      </div>
+    </div>
+    <div class="srv-stats-bar">
+      <div class="srv-stat">
+        <span class="srv-stat-val">{{.Server.MemberCount}}</span>
+        <span class="srv-stat-lbl">MEMBERS</span>
+      </div>
+      <div class="srv-stat-divider"></div>
+      <div class="srv-stat">
+        <span class="srv-stat-val"><span class="dot-online"></span>{{.Server.OnlineCount}}</span>
+        <span class="srv-stat-lbl">ONLINE</span>
+      </div>
+      <div class="srv-stat-divider"></div>
+      <div class="srv-stat">
+        <span class="srv-stat-val">{{len .Posts}}</span>
+        <span class="srv-stat-lbl">POSTS</span>
+      </div>
+    </div>
+    <div class="srv-actions-bar">
+      <button class="btn-share" onclick="copyServerLink()" title="Copy server link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+      {{if .Session}}
+        {{if .Server.IsMember}}
+          {{if ne .Server.UserRole "owner"}}
+          <button class="btn-leave" id="leaveBtn" onclick="leaveServer()">Leave</button>
+          {{end}}
+        {{else}}
+          <button class="btn-join" id="joinBtn" onclick="joinServer()">Join Server</button>
+        {{end}}
+        {{if or (eq .Server.UserRole "owner") (eq .Server.UserRole "partner")}}
+        <button class="btn-manage" id="openSettingsBtn">
+          <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          {{if eq .Server.UserRole "owner"}}Manage Server{{else}}Manage Members{{end}}
+        </button>
+        {{end}}
+      {{else}}
+        <a href="/login" class="btn-join" style="text-decoration:none;display:inline-flex;align-items:center;">Join Server</a>
+      {{end}}
+    </div>
+  </div>
+
+  <!-- MAIN COLUMN: compose + feed (no gap when compose absent) -->
+  <div class="main-col">
+
+  <!-- COMPOSE: owner/partner always; member only if free_for_all -->
+  {{if .Session}}
+  {{if or (eq .Server.UserRole "owner") (eq .Server.UserRole "partner") (and .Server.FreeForAll (eq .Server.UserRole "member"))}}
+  <div class="compose" id="composeBar">
+    <input type="text" placeholder="Post to {{.Server.Name}}..." readonly>
+    <button class="compose-btn" type="button" id="openPostModal">Post</button>
+  </div>
+  {{end}}
+  {{end}}
+
+  <!-- FEED -->
+  <div class="feed">
+    {{if not .Posts}}
+    <div class="feed-empty"><p>No posts in this server yet. Be the first!</p></div>
+    {{end}}
+    {{range .Posts}}
+    <div class="post" data-post-id="{{.ID}}">
+      <div class="vote">
+        <button class="vote-up{{if eq .UserVote 1}} voted-up{{end}}" aria-label="Upvote" onclick="castVote({{.ID}},1,this)">
+          <svg viewBox="0 0 24 24"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg>
+        </button>
+        <span class="count{{if lt .Score 0}} negative{{end}}" id="score-{{.ID}}">{{.Score}}</span>
+        <button class="vote-down{{if eq .UserVote -1}} voted-down{{end}}" aria-label="Downvote" onclick="castVote({{.ID}},-1,this)">
+          <svg viewBox="0 0 24 24"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg>
+        </button>
+      </div>
+      <div class="post-body">
+        <div class="post-meta">
+          {{if .CategoryName}}<a href="/forums?cat={{.CategorySlug}}" class="tag">{{.CategoryName}}</a>{{end}}
+          <span>{{.AuthorName}}</span><span>·</span><span>{{call $.TimeAgo .CreatedAt}}</span>
+          {{range .Hashtags}}<a href="/forums?tag={{.}}" class="hashtag">#{{.}}</a>{{end}}
+        </div>
+        <h3><a href="/forums/post/{{.ID}}">{{.Title}}</a></h3>
+        {{if .Body}}<p class="post-excerpt">{{if gt (len .Body) 160}}{{slice .Body 0 160}}…{{else}}{{.Body}}{{end}}</p>{{end}}
+        <div class="post-footer">
+          <a href="/forums/post/{{.ID}}#comments">
+            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-1.1 4.2L21 20l-4.3-1.1a8.5 8.5 0 1 1 4.3-7.4z"/></svg>
+            {{.CommentCount}} {{if eq .CommentCount 1}}reply{{else}}replies{{end}}
+          </a>
+          <span onclick="copyLink('/forums/post/{{.ID}}')">
+            <svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v14"/></svg>
+            Share
+          </span>
+        </div>
+      </div>
+      {{if .ImageURL}}<img src="{{.ImageURL}}" alt="" class="post-thumb" loading="lazy">{{end}}
+    </div>
+    {{end}}
+    {{if .HasMore}}
+    <div class="load-more-wrap">
+      <a href="/forums/server/{{.Server.Slug}}?page={{add1 .CurrentPage}}" class="load-more-btn">Load more</a>
+    </div>
+    {{end}}
+  </div>
+  </div><!-- /main-col -->
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-card">
+      <div class="side-card-head">
+        <span class="title">MEMBERS ({{.Server.MemberCount}})</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:#3FFF8D;">● {{.Server.OnlineCount}} online</span>
+      </div>
+      <div class="side-card-body" style="padding:8px 14px;max-height:340px;overflow-y:auto;">
+        {{range .Members}}
+        <div class="member-row" data-uid="{{.UserID}}" data-role="{{.Role}}">
+          <div class="member-avatar{{if .IsOnline}} online{{end}}" style="text-transform:uppercase;">{{if ge (len .Username) 2}}{{slice .Username 0 2}}{{else}}{{.Username}}{{end}}</div>
+          <span class="member-name" title="{{.Username}}">{{.Username}}</span>
+          <span class="role-badge {{.Role}}" style="font-size:0.6rem;padding:2px 7px;">{{upper .Role}}</span>
+        </div>
+        {{end}}
+      </div>
+    </div>
+
+    {{if .Server.Description}}
+    <div class="side-card">
+      <div class="side-card-head"><span class="title">ABOUT</span></div>
+      <div class="side-card-body" style="font-size:0.85rem;color:var(--text-dim);line-height:1.5;">{{.Server.Description}}</div>
+    </div>
+    {{end}}
+
+    <!-- Share card -->
+    <div class="side-card">
+      <div class="side-card-head"><span class="title">INVITE LINK</span></div>
+      <div class="side-card-body">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dimmer);margin-bottom:10px;">Share this server with your friends</div>
+        <div class="share-invite-row">
+          <div class="share-invite-input" id="shareInviteUrl"></div>
+          <button class="share-copy-btn" onclick="copyInviteLink(this)">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <div class="side-card-head"><span class="title">SERVER ID</span></div>
+      <div class="side-card-body">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dimmer);">@{{.Server.Slug}}</div>
+      </div>
+    </div>
+  </aside>
+</div>
+</div>
+
+<!-- CREATE POST MODAL -->
+<div class="modal-backdrop" id="postModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2>Post to {{.Server.Name}}</h2>
+      <button class="modal-close" id="closePostModal" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+    <form method="POST" action="/forums/post" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <input type="hidden" name="server_id" value="{{.Server.ID}}">
+      <div class="form-field">
+        <label for="postTitle">TITLE *</label>
+        <input type="text" id="postTitle" name="title" class="form-input" placeholder="What's your discussion about?" required maxlength="200" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label for="postBody">BODY</label>
+        <textarea id="postBody" name="body" class="form-input" placeholder="Share details... Use #hashtag to tag." style="min-height:90px;resize:vertical;"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-field">
+          <label for="postCategory">CATEGORY</label>
+          <select id="postCategory" name="category" class="form-input">
+            <option value="">— none —</option>
+            {{range .Categories}}<option value="{{.Slug}}">{{.Name}}</option>{{end}}
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="postHashtags">HASHTAGS</label>
+          <input type="text" id="postHashtags" name="hashtags" class="form-input" placeholder="pgp, opsec" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-field">
+        <label for="postImage">IMAGE (optional)</label>
+        <input type="file" id="postImage" name="image" accept="image/*" class="form-input" style="padding:8px 12px;">
+        <div id="imgPreview" style="margin-top:8px;display:none;"><img id="imgPreviewImg" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--line);" alt=""></div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" id="cancelPostModal">Cancel</button>
+        <button type="submit" class="btn-submit">Post</button>
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL (owner / partner only) -->
+{{if or (eq .Server.UserRole "owner") (eq .Server.UserRole "partner")}}
+<div class="modal-backdrop" id="settingsModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2>{{if eq .Server.UserRole "owner"}}Server Settings{{else}}Member Management{{end}}</h2>
+      <button class="modal-close" id="closeSettingsModal" type="button">
+        <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    {{if eq .Server.UserRole "owner"}}
+    <div class="modal-tabs">
+      <button class="modal-tab active" data-tab="info">Server Info</button>
+      <button class="modal-tab" data-tab="media">Media</button>
+      <button class="modal-tab" data-tab="members">Members</button>
+    </div>
+    {{end}}
+    <div class="modal-body">
+      <!-- Info tab (owner only) -->
+      {{if eq .Server.UserRole "owner"}}
+      <div class="tab-pane active" id="tab-info">
+        <form id="settingsForm">
+          <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+          <div class="form-field">
+            <label>SERVER NAME</label>
+            <input type="text" name="name" class="form-input" value="{{.Server.Name}}" required maxlength="100">
+          </div>
+          <div class="form-field">
+            <label>DESCRIPTION</label>
+            <textarea name="description" class="form-input" maxlength="500" style="min-height:80px;resize:vertical;">{{.Server.Description}}</textarea>
+          </div>
+          <div class="form-field">
+            <label>SERVER TYPE</label>
+            <div class="toggle-row">
+              <label class="toggle-switch">
+                <input type="checkbox" name="free_for_all" id="ffa-toggle" {{if .Server.FreeForAll}}checked{{end}}>
+                <span class="toggle-track"></span>
+              </label>
+              <div class="toggle-info">
+                <span id="ffa-label">{{if .Server.FreeForAll}}Open — All Members{{else}}Partners Only{{end}}</span>
+                <div class="form-hint" id="ffa-hint">{{if .Server.FreeForAll}}All members can post{{else}}Only partners &amp; owner can post{{end}}</div>
+              </div>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>SHARE LINK</label>
+            <div class="share-link-row">
+              <input type="text" class="form-input" id="shareLinkInput" value="/forums/server/{{.Server.PublicID}}" readonly style="flex:1;cursor:pointer;" onclick="this.select()">
+              <button type="button" class="img-upload-btn" onclick="copyShareLink()" id="copyShareBtn" style="flex-shrink:0;">Copy</button>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" onclick="closeSettingsModal()">Cancel</button>
+            <button type="submit" class="btn-submit">Save Changes</button>
+          </div>
+        </form>
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--line);">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#e05555;letter-spacing:0.08em;margin-bottom:10px;">DANGER ZONE</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:0.84rem;color:var(--text);font-weight:500;">Delete this server</div>
+              <div style="font-size:0.74rem;color:var(--text-dimmer);margin-top:2px;">Permanently removes the server and all its posts. This cannot be undone.</div>
+            </div>
+            <button type="button" id="deleteServerBtn" style="flex-shrink:0;padding:7px 18px;border-radius:100px;border:1px solid #e05555;background:none;color:#e05555;font-size:0.82rem;font-weight:600;cursor:pointer;transition:background 0.2s,color 0.2s;white-space:nowrap;"
+              onmouseover="this.style.background='#e05555';this.style.color='#fff';"
+              onmouseout="this.style.background='none';this.style.color='#e05555';">
+              Delete Server
+            </button>
+          </div>
+          <div id="deleteConfirmBox" style="display:none;margin-top:14px;padding:14px;border-radius:10px;border:1px solid #e05555;background:rgba(224,85,85,0.07);">
+            <div style="font-size:0.82rem;color:var(--text);margin-bottom:10px;">Type the server name to confirm deletion:</div>
+            <input type="text" id="deleteConfirmInput" class="form-input" placeholder="{{.Server.Name}}" autocomplete="off" style="margin-bottom:10px;">
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button type="button" onclick="document.getElementById('deleteConfirmBox').style.display='none';document.getElementById('deleteConfirmInput').value='';" class="btn-cancel" style="padding:6px 16px;font-size:0.8rem;">Cancel</button>
+              <button type="button" id="deleteConfirmBtn" style="padding:6px 18px;border-radius:100px;border:none;background:#e05555;color:#fff;font-size:0.8rem;font-weight:600;cursor:pointer;opacity:0.5;pointer-events:none;transition:opacity 0.2s;">Confirm Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {{end}}
+
+      <!-- Media tab (owner only) -->
+      {{if eq .Server.UserRole "owner"}}
+      <div class="tab-pane" id="tab-media">
+        <div class="form-field">
+          <label>SERVER LOGO</label>
+          <div class="img-upload-wrap">
+            <div class="img-upload-preview" id="logoPreview">
+              {{if .Server.LogoURL}}<img src="{{.Server.LogoURL}}" id="logoPreviewImg" alt="">{{else}}<span id="logoPreviewImg">{{.Server.Initials}}</span>{{end}}
+            </div>
+            <div class="img-upload-label">
+              <label class="img-upload-btn" for="logoFileInput">
+                <svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v14"/></svg>
+                Upload Logo
+              </label>
+              <input type="file" id="logoFileInput" accept="image/*" style="display:none;" onchange="uploadServerImage('logo',this)">
+              <div class="img-upload-hint">Square image, at least 256×256px recommended</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-field" style="margin-top:20px;">
+          <label>SERVER BANNER</label>
+          <div class="img-upload-wrap">
+            <div class="img-upload-preview wide" id="bannerPreview">
+              {{if .Server.BannerURL}}<img src="{{.Server.BannerURL}}" id="bannerPreviewImg" alt="">{{else}}<span style="font-size:0.65rem;">NO BANNER</span>{{end}}
+            </div>
+            <div class="img-upload-label">
+              <label class="img-upload-btn" for="bannerFileInput">
+                <svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v14"/></svg>
+                Upload Banner
+              </label>
+              <input type="file" id="bannerFileInput" accept="image/*" style="display:none;" onchange="uploadServerImage('banner',this)">
+              <div class="img-upload-hint">Landscape image, 960×200px recommended</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {{end}}
+
+      <!-- Members tab -->
+      <div class="tab-pane{{if ne .Server.UserRole "owner"}} active{{end}}" id="tab-members">
+        {{range .Members}}
+        <div class="settings-member-row" id="smr-{{.UserID}}">
+          <div class="member-avatar{{if .IsOnline}} online{{end}}" style="width:32px;height:32px;font-size:0.7rem;flex-shrink:0;text-transform:uppercase;">{{if ge (len .Username) 2}}{{slice .Username 0 2}}{{else}}{{.Username}}{{end}}</div>
+          <div class="settings-member-info">
+            <div class="settings-member-name">{{.Username}} <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--text-dimmer);">#{{.UserID}}</span>{{if .ViaInvite}} <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;padding:1px 5px;border-radius:4px;background:rgba(111,106,248,0.15);color:#9b97f7;border:1px solid rgba(111,106,248,0.3);">via invite</span>{{end}}</div>
+            <div class="settings-member-role">{{.Role}}{{if .IsOnline}} · online{{end}}</div>
+          </div>
+          <div class="settings-member-btns">
+            {{if ne .Role "owner"}}
+              {{if eq $.Server.UserRole "owner"}}
+                {{if eq .Role "partner"}}
+                <button class="s-btn s-demote" onclick="memberAction({{.UserID}},'role','member',this)">Demote</button>
+                {{else}}
+                <button class="s-btn s-promote" onclick="memberAction({{.UserID}},'role','partner',this)">Partner</button>
+                {{end}}
+                <button class="s-btn s-kick" onclick="memberAction({{.UserID}},'kick','',this)">Kick</button>
+                <button class="s-btn s-ban" onclick="memberAction({{.UserID}},'ban','',this)">Ban</button>
+              {{else if eq $.Server.UserRole "partner"}}
+                {{if eq .Role "member"}}
+                <button class="s-btn s-kick" onclick="memberAction({{.UserID}},'kick','',this)">Kick</button>
+                {{end}}
+              {{end}}
+            {{end}}
+          </div>
+        </div>
+        {{end}}
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{if and (not .Server.IsMember) (eq .Server.UserRole "")}}
+<div class="join-banner" id="joinBanner">
+  <div class="jb-icon">{{.Server.Initials}}</div>
+  <div class="jb-info">
+    <div class="jb-name">{{if .ViaInvite}}You've been invited to join{{else}}Join{{end}} <strong>{{.Server.Name}}</strong></div>
+    <div class="jb-sub">{{.Server.MemberCount}} members · {{.Server.Description}}</div>
+  </div>
+  {{if .Session}}
+  <button class="btn-join" onclick="joinServer()">Join Server</button>
+  {{else}}
+  <a href="/login" class="btn-join" style="text-decoration:none;display:inline-flex;align-items:center;padding:8px 20px;">Login to Join</a>
+  {{end}}
+  <button class="jb-close" onclick="document.getElementById('joinBanner').style.display='none'" aria-label="Close">×</button>
+</div>
+{{end}}
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var SERVER_ID = {{.Server.PublicID}};
+  var SERVER_SLUG = '{{.Server.Slug}}';
+  var SERVER_INVITE_TOKEN = '{{.Server.InviteToken}}';
+  var CSRF = '{{.CSRFToken}}';
+  var IS_LOGGED_IN = {{if .Session}}true{{else}}false{{end}};
+
+  /* server theme color from name hash (only if no custom banner/logo) */
+  (function(){
+    function strToHsl(str){
+      var hash=0;
+      for(var i=0;i<str.length;i++) hash=str.charCodeAt(i)+((hash<<5)-hash);
+      var h=Math.abs(hash)%360;
+      return 'hsl('+h+',62%,52%)';
+    }
+    var c = strToHsl('{{.Server.Name}}');
+    var banner = document.getElementById('srvBanner');
+    var icon = document.getElementById('srvIconBig');
+    if(banner && !banner.style.background) banner.style.background = 'linear-gradient(135deg,'+c+' 0%,rgba(10,10,18,0.9) 130%)';
+    if(icon && !icon.style.background){ icon.style.background = c; }
+  })();
+
+  /* share invite link */
+  (function(){
+    var el = document.getElementById('shareInviteUrl');
+    var invUrl = SERVER_INVITE_TOKEN
+      ? window.location.origin + '/invite/' + SERVER_INVITE_TOKEN
+      : window.location.origin + '/forums/server/' + SERVER_SLUG;
+    if(el){ el.textContent = invUrl; }
+  })();
+  window.copyInviteLink = function(btn){
+    var invUrl = SERVER_INVITE_TOKEN
+      ? window.location.origin + '/invite/' + SERVER_INVITE_TOKEN
+      : window.location.origin + '/forums/server/' + SERVER_SLUG;
+    navigator.clipboard.writeText(invUrl)
+      .then(function(){ showToast('Link copied!'); btn.textContent='Copied!'; setTimeout(function(){ btn.textContent='Copy'; },2000); })
+      .catch(function(){ showToast('Copy failed', false); });
+  };
+
+  window.checkHandle = function(val, excludeID) {
+    val = val.toLowerCase().replace(/[^a-z0-9\-_]/g, '');
+    var el = document.getElementById('handleStatus');
+    if (!val) { if(el) el.textContent = ''; return; }
+    if(el) el.textContent = '…';
+    fetch('/api/forums/handle-check?handle=' + encodeURIComponent(val) + '&exclude=' + (excludeID||0))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(el) { el.textContent = d.available ? '✓ available' : '✗ taken'; el.style.color = d.available ? '#6dba7c' : '#e07070'; }
+      });
+  };
+  window.copyServerLink = function(){
+    var url = SERVER_INVITE_TOKEN
+      ? window.location.origin + '/invite/' + SERVER_INVITE_TOKEN
+      : window.location.origin + '/forums/server/' + SERVER_ID;
+    navigator.clipboard.writeText(url)
+      .then(function(){ showToast('Invite link copied!'); })
+      .catch(function(){
+        var ta = document.createElement('textarea');
+        ta.value = url; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); showToast('Invite link copied!'); } catch(e){ showToast('Copy failed', false); }
+        document.body.removeChild(ta);
+      });
+  };
+
+  /* desk-settings-btn */
+  var deskBtn = document.getElementById('deskSettingsBtn');
+  if(deskBtn){ deskBtn.addEventListener('click', openSettingsModal); }
+
+  /* mobile left-panel */
+  var fab = document.getElementById('fabCommunities');
+  var leftPanel = document.getElementById('leftPanel');
+  var drawerOverlay = document.getElementById('drawerOverlay');
+  if(fab) fab.addEventListener('click', function(){ leftPanel.classList.add('drawer-open'); drawerOverlay.classList.add('active'); });
+  if(drawerOverlay) drawerOverlay.addEventListener('click', function(){ leftPanel.classList.remove('drawer-open'); drawerOverlay.classList.remove('active'); });
+
+  /* toast */
+  function showToast(msg, ok) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.borderColor = ok === false ? '#E05555' : 'var(--up)';
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2800);
+  }
+
+  /* post modal */
+  var postBackdrop = document.getElementById('postModalBackdrop');
+  function openPostModal() { if(!IS_LOGGED_IN){ window.location.href='/login'; return; } postBackdrop.classList.add('open'); document.getElementById('postTitle').focus(); }
+  window.closePostModal = function() { postBackdrop.classList.remove('open'); };
+  var composeBar = document.getElementById('composeBar');
+  if(composeBar) composeBar.addEventListener('click', openPostModal);
+  var openPostBtn = document.getElementById('openPostModal');
+  if(openPostBtn) openPostBtn.addEventListener('click', function(e){ e.stopPropagation(); openPostModal(); });
+  document.getElementById('closePostModal').addEventListener('click', function(){ window.closePostModal(); });
+  document.getElementById('cancelPostModal').addEventListener('click', function(){ window.closePostModal(); });
+  postBackdrop.addEventListener('click', function(e){ if(e.target===postBackdrop) window.closePostModal(); });
+
+  /* image preview */
+  var imgInput = document.getElementById('postImage');
+  if(imgInput) imgInput.addEventListener('change', function(){
+    var f = this.files[0];
+    if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(e){ document.getElementById('imgPreviewImg').src = e.target.result; document.getElementById('imgPreview').style.display='block'; };
+    reader.readAsDataURL(f);
+  });
+
+  /* settings modal */
+  var settingsBackdrop = document.getElementById('settingsModalBackdrop');
+  var openSettingsBtn = document.getElementById('openSettingsBtn');
+  function openSettingsModal(){ if(settingsBackdrop) settingsBackdrop.classList.add('open'); }
+  if(openSettingsBtn && settingsBackdrop){
+    openSettingsBtn.addEventListener('click', openSettingsModal);
+  }
+  /* fab-admin → opens settings modal */
+  var fabAdmin = document.getElementById('fabAdmin');
+  if(fabAdmin && settingsBackdrop){
+    fabAdmin.addEventListener('click', openSettingsModal);
+  }
+  window.closeSettingsModal = function(){ if(settingsBackdrop) settingsBackdrop.classList.remove('open'); };
+  if(settingsBackdrop){
+    var closeBtn = document.getElementById('closeSettingsModal');
+    if(closeBtn) closeBtn.addEventListener('click', window.closeSettingsModal);
+    settingsBackdrop.addEventListener('click', function(e){ if(e.target===settingsBackdrop) window.closeSettingsModal(); });
+  }
+
+  /* settings tabs */
+  var tabs = document.querySelectorAll('.modal-tab');
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+      document.querySelectorAll('.tab-pane').forEach(function(p){ p.classList.remove('active'); });
+      tab.classList.add('active');
+      var pane = document.getElementById('tab-' + tab.dataset.tab);
+      if(pane) pane.classList.add('active');
+    });
+  });
+
+  /* save settings */
+  /* ffa toggle label update */
+  var ffaToggle = document.getElementById('ffa-toggle');
+  if(ffaToggle){
+    ffaToggle.addEventListener('change', function(){
+      var lbl = document.getElementById('ffa-label');
+      var hint = document.getElementById('ffa-hint');
+      if(this.checked){
+        if(lbl) lbl.textContent = 'Open \u2014 All Members';
+        if(hint) hint.textContent = 'All members can post';
+      } else {
+        if(lbl) lbl.textContent = 'Partners Only';
+        if(hint) hint.textContent = 'Only partners & owner can post';
+      }
+    });
+  }
+
+  /* ── delete server ── */
+  var deleteServerBtn = document.getElementById('deleteServerBtn');
+  var deleteConfirmBox = document.getElementById('deleteConfirmBox');
+  var deleteConfirmInput = document.getElementById('deleteConfirmInput');
+  var deleteConfirmBtn = document.getElementById('deleteConfirmBtn');
+  var SERVER_NAME = {{.Server.Name | js}};
+  if(deleteServerBtn){
+    deleteServerBtn.addEventListener('click', function(){
+      deleteConfirmBox.style.display = 'block';
+      deleteConfirmInput.value = '';
+      deleteConfirmBtn.style.opacity = '0.5';
+      deleteConfirmBtn.style.pointerEvents = 'none';
+      setTimeout(function(){ deleteConfirmInput.focus(); }, 50);
+    });
+    deleteConfirmInput.addEventListener('input', function(){
+      var match = this.value.trim() === SERVER_NAME.trim();
+      deleteConfirmBtn.style.opacity = match ? '1' : '0.5';
+      deleteConfirmBtn.style.pointerEvents = match ? 'auto' : 'none';
+    });
+    deleteConfirmBtn.addEventListener('click', function(){
+      if(deleteConfirmInput.value.trim() !== SERVER_NAME.trim()) return;
+      deleteConfirmBtn.textContent = 'Deleting…';
+      deleteConfirmBtn.style.pointerEvents = 'none';
+      fetch('/api/forums/server/' + SERVER_ID + '/delete', {
+        method: 'POST', credentials: 'same-origin',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: '_csrf=' + encodeURIComponent(CSRF)
+      }).then(function(r){ return r.json(); }).then(function(d){
+        if(d.ok){
+          showToast('Server deleted');
+          setTimeout(function(){ window.location.href = '/forums'; }, 900);
+        } else {
+          showToast('Delete failed', false);
+          deleteConfirmBtn.textContent = 'Confirm Delete';
+          deleteConfirmBtn.style.pointerEvents = 'auto';
+        }
+      }).catch(function(){
+        showToast('Error deleting server', false);
+        deleteConfirmBtn.textContent = 'Confirm Delete';
+        deleteConfirmBtn.style.pointerEvents = 'auto';
+      });
+    });
+  }
+
+  var settingsForm = document.getElementById('settingsForm');
+  if(settingsForm) settingsForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var data = new URLSearchParams(new FormData(this));
+    fetch('/api/forums/server/' + SERVER_ID + '/settings', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: data.toString() + '&_csrf=' + encodeURIComponent(CSRF)
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if(d.ok){
+        showToast('Settings saved!');
+        setTimeout(function(){ window.location.href='/forums/server/' + d.public_id; }, 800);
+      } else {
+        showToast('Save failed', false);
+      }
+    }).catch(function(){ showToast('Error saving settings', false); });
+  });
+
+  /* member action */
+  window.memberAction = function(userID, action, role, btn){
+    var reason = '';
+    if(action === 'ban'){
+      reason = prompt('Reason for ban (optional):') || '';
+    }
+    if(action === 'kick' || action === 'ban'){
+      if(!confirm('Are you sure?')) return;
+    }
+    var body = '_csrf=' + encodeURIComponent(CSRF) + '&action=' + action + '&user_id=' + userID;
+    if(role) body += '&role=' + role;
+    if(reason) body += '&reason=' + encodeURIComponent(reason);
+    fetch('/api/forums/server/' + SERVER_ID + '/member', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: body
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if(d.ok){
+        if(action === 'kick' || action === 'ban'){
+          var row = document.getElementById('smr-' + userID);
+          if(row) row.remove();
+          // also remove from main members list
+          var mainRow = document.querySelector('[data-uid="' + userID + '"]');
+          if(mainRow) mainRow.remove();
+          showToast(action === 'ban' ? 'User banned' : 'User kicked');
+        } else {
+          // role change
+          var row = document.getElementById('smr-' + userID);
+          if(row){
+            var roleEl = row.querySelector('.settings-member-role');
+            if(roleEl) roleEl.textContent = role + (roleEl.textContent.includes('online') ? ' · online' : '');
+          }
+          showToast('Role updated to ' + role);
+        }
+      } else {
+        showToast('Action failed', false);
+      }
+    }).catch(function(){ showToast('Error', false); });
+  };
+
+  /* join / leave */
+  window.joinServer = function(){
+    if(!IS_LOGGED_IN){ window.location.href='/login'; return; }
+    var body = '_csrf=' + encodeURIComponent(CSRF) +
+               '&invite_token=' + encodeURIComponent(SERVER_INVITE_TOKEN);
+    fetch('/api/forums/server/' + SERVER_ID + '/join', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: body
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if(d.ok) window.location.reload();
+      else showToast(d.error || 'Failed to join', false);
+    }).catch(function(){ showToast('Error', false); });
+  };
+  window.leaveServer = function(){
+    if(!confirm('Leave this server?')) return;
+    fetch('/api/forums/server/' + SERVER_ID + '/leave', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: '_csrf=' + encodeURIComponent(CSRF)
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if(d.ok) window.location.reload();
+      else showToast(d.error || 'Cannot leave', false);
+    }).catch(function(){ showToast('Error', false); });
+  };
+
+  /* voting */
+  window.castVote = function(postID, value, btn){
+    if(!IS_LOGGED_IN){ window.location.href='/login'; return; }
+    var currentVote = btn.classList.contains('voted-up') ? 1 : (btn.classList.contains('voted-down') ? -1 : 0);
+    var send = (currentVote === value) ? 0 : value;
+    fetch('/api/forums/post/' + postID + '/vote', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'value=' + send + '&_csrf=' + encodeURIComponent(CSRF)
+    }).then(function(r){ return r.json(); }).then(function(d){
+      var scoreEl = document.getElementById('score-' + postID);
+      if(scoreEl){ scoreEl.textContent = d.score; scoreEl.className = 'count' + (d.score < 0 ? ' negative' : ''); }
+      var post = document.querySelector('[data-post-id="' + postID + '"]');
+      if(post){
+        post.querySelector('.vote-up').classList.toggle('voted-up', d.user_vote === 1);
+        post.querySelector('.vote-down').classList.toggle('voted-down', d.user_vote === -1);
+      }
+    }).catch(function(){});
+  };
+
+  window.copyLink = function(path){
+    navigator.clipboard.writeText(window.location.origin + path).catch(function(){});
+    showToast('Link copied!');
+  };
+
+  /* image upload for logo/banner */
+  window.uploadServerImage = function(type, input){
+    var file = input.files[0];
+    if(!file) return;
+    var fd = new FormData();
+    fd.append('file', file);
+    fd.append('_csrf', CSRF);
+    showToast('Uploading…');
+    fetch('/api/forums/server/'+SERVER_ID+'/'+type, {
+      method:'POST', credentials:'same-origin', body:fd
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.ok){
+        showToast(type==='logo'?'Logo updated!':'Banner updated!');
+        if(type==='logo'){
+          var icon = document.getElementById('srvIconBig');
+          if(icon){ icon.style.background='url(\''+d.url+'\') center/cover no-repeat'; icon.textContent=''; }
+          var prev = document.getElementById('logoPreviewImg');
+          if(prev && prev.tagName === 'IMG') prev.src = d.url;
+        } else {
+          var banner = document.getElementById('srvBanner');
+          if(banner){ banner.style.background='url(\''+d.url+'\') center/cover no-repeat'; }
+          var prev = document.getElementById('bannerPreviewImg');
+          if(prev && prev.tagName === 'IMG') prev.src = d.url;
+        }
+      } else { showToast('Upload failed', false); }
+    }).catch(function(){ showToast('Upload error', false); });
+  };
+
+  /* profile popup */
+  var ppOverlay = document.getElementById('srvProfileOverlay');
+  var ppPopup = document.getElementById('srvProfilePopup');
+  var ppOpen = false; var ppUser = '';
+
+  var SRV_LOGGED = {{if .Session}}true{{else}}false{{end}};
+  var SRV_ME     = '{{if .Session}}{{.Session.Username}}{{end}}';
+
+  window.showSrvProfile = function(e, username){
+    e.preventDefault(); e.stopPropagation();
+    var rect = e.currentTarget.getBoundingClientRect();
+    ppOverlay.style.display = 'block';
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var pw = Math.min(300, vw - 16);
+    var left = rect.left;
+    if(left + pw > vw - 8) left = vw - pw - 8;
+    if(left < 8) left = 8;
+    var top = rect.bottom + 8;
+    if(top + 260 > vh) top = rect.top - 260 - 8;
+    if(top < 8) top = 8;
+    ppPopup.style.width = pw + 'px';
+    ppPopup.style.left = left+'px';
+    ppPopup.style.top = top+'px';
+    ppOpen = true;
+    if(ppUser === username) return;
+    ppUser = username;
+    ppPopup.innerHTML = '<div class="popup-loading">Loading…</div>';
+    fetch('/api/forums/user/'+username+'/popup',{credentials:'same-origin'})
+      .then(function(r){return r.json();})
+      .then(function(u){
+        var av = u.avatar_url?'<img src="'+u.avatar_url+'" alt="">':'<span>'+esc(u.initials||'?')+'</span>';
+        var isSelf = SRV_LOGGED && u.username === SRV_ME;
+        var acts = '';
+        if(SRV_LOGGED && !isSelf){
+          var followLabel = u.is_following ? 'Following' : 'Follow';
+          var followClass = u.is_following ? 'pp-btn pp-btn-following' : 'pp-btn pp-btn-primary';
+          acts +=
+            '<button class="'+followClass+'" onclick="srvFollowUser(\''+esc(u.username)+'\',this)">'+followLabel+'</button>'+
+            '<button class="pp-btn" onclick="srvAddFriend(\'' + esc(u.username) + '\',this)">Add Friend</button>'+
+            '<a href="/chat?with='+encodeURIComponent(u.username)+'" class="pp-btn">Chat</a>';
+        }
+        acts += '<a href="/forums/u/'+encodeURIComponent(u.username)+'" class="pp-btn">View Profile</a>';
+        ppPopup.innerHTML =
+          '<div class="popup-banner"><div class="popup-avatar">'+av+'</div></div>'+
+          '<div class="popup-body">'+
+            '<div class="popup-name">'+esc(u.display_name||u.username)+'</div>'+
+            '<div class="popup-uname">@'+esc(u.username)+'</div>'+
+            (u.bio?'<div class="popup-bio">'+esc(u.bio)+'</div>':'')+
+            '<div class="popup-acts">'+acts+'</div>'+
+          '</div>';
+      }).catch(function(){ ppPopup.innerHTML='<div class="popup-loading">Not found</div>'; });
+  };
+
+  window.srvFollowUser = function(username, btn){
+    if(!SRV_LOGGED){ window.location.href='/login'; return; }
+    fetch('/api/forums/user/'+username+'/follow',{
+      method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'_csrf='+encodeURIComponent(CSRF)
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.following){
+        btn.textContent='Following'; btn.className='pp-btn pp-btn-following';
+      } else {
+        btn.textContent='Follow'; btn.className='pp-btn pp-btn-primary';
+      }
+    });
+  };
+
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  document.addEventListener('click', function(e){
+    if(ppOpen && ppPopup && !ppPopup.contains(e.target)){
+      ppOverlay.style.display='none'; ppOpen=false; ppUser='';
+    }
+  });
+
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ window.closePostModal(); window.closeSettingsModal(); } });
+})();
+</script>
+{{end}}

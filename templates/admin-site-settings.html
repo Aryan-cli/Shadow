@@ -1,0 +1,118 @@
+{{define "admin-title"}}Site Settings{{end}}
+
+{{define "admin-content"}}
+<div class="page-header">
+  <h1>Site Settings</h1>
+  <p>Adjust platform-wide thresholds, behaviour, and payment configuration.</p>
+</div>
+
+{{if .Success}}<div class="alert alert-success" style="margin-bottom:1.5rem;">{{.Success}}</div>{{end}}
+
+<form method="POST" action="{{.AdminPath}}/settings">
+  <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+
+  <!-- ── Online Status ── -->
+  <div class="card" style="max-width:560px;margin-bottom:1.5rem;">
+    <div style="padding:1.5rem;border-bottom:1px solid var(--line);">
+      <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:0.25rem;">Online Status Thresholds</h3>
+      <p style="font-size:0.82rem;color:var(--text-dim);">How long without a heartbeat before status changes. Heartbeat fires every 30 seconds while the tab is open.</p>
+    </div>
+    <div style="padding:1.5rem;display:flex;flex-direction:column;gap:1.25rem;">
+      <div>
+        <label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:.06em;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">
+          Online → Idle threshold (seconds)
+        </label>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <input type="number" name="online_threshold_seconds" value="{{.OnlineThreshold}}" min="5" max="3600"
+            style="width:120px;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:0.5rem 0.75rem;color:var(--text);font-size:0.9rem;">
+          <span style="font-size:0.82rem;color:var(--text-dim);">User shows <span class="badge badge-green" style="vertical-align:middle;">Online</span> if heartbeat was received within this many seconds.</span>
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:.06em;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.5rem;">
+          Idle → Offline threshold (seconds)
+        </label>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <input type="number" name="idle_threshold_seconds" value="{{.IdleThreshold}}" min="30" max="86400"
+            style="width:120px;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:0.5rem 0.75rem;color:var(--text);font-size:0.9rem;">
+          <span style="font-size:0.82rem;color:var(--text-dim);">User shows <span class="badge badge-yellow" style="vertical-align:middle;">Idle</span> between Online threshold and this value. Beyond → <span class="badge badge-dim" style="vertical-align:middle;">Offline</span>.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Payment Settings ── -->
+  <div class="card" style="max-width:560px;margin-bottom:1.5rem;">
+    <div style="padding:1.5rem;border-bottom:1px solid var(--line);">
+      <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:0.25rem;">Payment Settings</h3>
+      <p style="font-size:0.82rem;color:var(--text-dim);">Configure cryptocurrency payment options and main wallet addresses for fund collection.</p>
+    </div>
+    <div style="padding:1.5rem;display:flex;flex-direction:column;gap:1.5rem;">
+
+      <!-- Bitcoin -->
+      <div style="border:1px solid var(--line);border-radius:12px;overflow:hidden;">
+        <div style="padding:1rem 1.25rem;background:rgba(247,147,26,0.06);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.3rem;">₿</span>
+          <div style="flex:1;">
+            <div style="font-size:0.9rem;font-weight:700;color:var(--text);">Bitcoin (BTC)</div>
+            <div style="font-size:0.78rem;color:var(--text-dim);">On-chain Bitcoin payments</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <span style="font-size:0.8rem;color:var(--text-dim);">Enabled</span>
+            <input type="checkbox" name="btc_enabled" value="1"{{if .BTCEnabled}} checked{{end}}
+              style="width:16px;height:16px;accent-color:#f7931a;cursor:pointer;">
+          </label>
+        </div>
+        <div style="padding:1rem 1.25rem;">
+          <div style="display:flex;align-items:center;gap:10px;background:{{if .HDWalletActive}}rgba(52,211,153,0.07){{else}}rgba(239,68,68,0.07){{end}};border:1px solid {{if .HDWalletActive}}rgba(52,211,153,0.25){{else}}rgba(239,68,68,0.25){{end}};border-radius:8px;padding:0.65rem 0.9rem;">
+            <div style="width:8px;height:8px;border-radius:50%;background:{{if .HDWalletActive}}#34d399{{else}}#ef4444{{end}};flex-shrink:0;"></div>
+            <div>
+              <div style="font-size:0.82rem;font-weight:600;color:var(--text);">HD Wallet (BIP44) — {{if .HDWalletActive}}Active{{else}}Not Configured{{end}}</div>
+              <div style="font-size:0.75rem;color:var(--text-dim);margin-top:2px;">{{if .HDWalletActive}}BTC_HD_MNEMONIC is set. Each payment gets a unique derived address. Funds stay in your HD wallet.{{else}}Set the BTC_HD_MNEMONIC environment variable (12 or 24 word seed phrase) to enable BTC payments.{{end}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monero -->
+      <div style="border:1px solid var(--line);border-radius:12px;overflow:hidden;">
+        <div style="padding:1rem 1.25rem;background:rgba(255,102,0,0.05);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.3rem;">ɱ</span>
+          <div style="flex:1;">
+            <div style="font-size:0.9rem;font-weight:700;color:var(--text);">Monero (XMR)</div>
+            <div style="font-size:0.78rem;color:var(--text-dim);">Private, untraceable payments</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <span style="font-size:0.8rem;color:var(--text-dim);">Enabled</span>
+            <input type="checkbox" name="xmr_enabled" value="1"{{if .XMREnabled}} checked{{end}}
+              style="width:16px;height:16px;accent-color:#ff6600;cursor:pointer;">
+          </label>
+        </div>
+        <div style="padding:1rem 1.25rem;display:flex;flex-direction:column;gap:0.75rem;">
+          <div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0.4rem;">
+              <input type="checkbox" name="xmr_maintenance" value="1"{{if .XMRMaint}} checked{{end}}
+                style="width:16px;height:16px;accent-color:#eab308;cursor:pointer;">
+              <span style="font-size:0.85rem;font-weight:600;color:var(--text);">Under Maintenance</span>
+            </label>
+            <div style="font-size:0.75rem;color:var(--text-dimmer);margin-left:24px;">When checked, XMR shows as "Under Maintenance" to users even if enabled.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:{{if .XMRRPCActive}}rgba(52,211,153,0.07){{else}}rgba(239,68,68,0.07){{end}};border:1px solid {{if .XMRRPCActive}}rgba(52,211,153,0.25){{else}}rgba(239,68,68,0.25){{end}};border-radius:8px;padding:0.65rem 0.9rem;">
+            <div style="width:8px;height:8px;border-radius:50%;background:{{if .XMRRPCActive}}#34d399{{else}}#ef4444{{end}};flex-shrink:0;"></div>
+            <div>
+              <div style="font-size:0.82rem;font-weight:600;color:var(--text);">XMR Wallet Keys — {{if .XMRRPCActive}}Active{{else}}Not Configured{{end}}</div>
+              <div style="font-size:0.75rem;color:var(--text-dim);margin-top:2px;">{{if .XMRRPCActive}}XMR_SPEND_KEY is set. Each payment gets a unique derived subaddress automatically.{{else}}Set XMR_SPEND_KEY (private spend key, 64 hex chars) from Feather Wallet → Wallet → Keys.{{end}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="max-width:560px;display:flex;justify-content:flex-end;">
+    <button type="submit" class="btn btn-primary">Save changes</button>
+  </div>
+
+</form>
+{{end}}
